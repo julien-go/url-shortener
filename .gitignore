@@ -1,0 +1,52 @@
+# ====================
+# Dependencies
+# ====================
+node_modules/
+.pnpm-store/
+
+# ====================
+# Builds / outputs
+# ====================
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# Vite
+apps/frontend/dist/
+apps/frontend/.vite/
+
+# Backend build
+apps/backend/dist/
+
+# ====================
+# Environment variables
+# ====================
+.env
+.env.*
+!.env.example
+
+# ====================
+# Logs
+# ====================
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ====================
+# OS / Editor
+# ====================
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+*.iml
+
+# ====================
+# Lockfiles (pnpm only)
+# ====================
+package-lock.json
+yarn.lock
+!pnpm-lock.yaml
