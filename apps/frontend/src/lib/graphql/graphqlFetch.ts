@@ -46,10 +46,25 @@ export async function graphqlFetch<
     body: JSON.stringify({ query, variables }),
   });
 
-  const json = await res.json();
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    throw new GraphQLRequestError("Invalid JSON response", [], res.status);
+  }
 
-  if (json?.errors?.length) {
-    const first = json.errors[0] as GraphQLErrorItem;
+  if (!res.ok) {
+    throw new GraphQLRequestError("HTTP error", [], res.status);
+  }
+
+  if (
+    typeof json === "object" &&
+    json !== null &&
+    "errors" in json &&
+    Array.isArray((json as { errors?: unknown }).errors) &&
+    (json as { errors?: unknown[] }).errors?.length
+  ) {
+    const first = (json as { errors: GraphQLErrorItem[] }).errors[0];
     const code = first?.extensions?.code;
 
     if (code === "UNAUTHENTICATED") {
@@ -58,10 +73,14 @@ export async function graphqlFetch<
 
     throw new GraphQLRequestError(
       first?.message ?? "GraphQL error",
-      json.errors as GraphQLErrorItem[],
+      (json as { errors: GraphQLErrorItem[] }).errors,
       res.status,
     );
   }
 
-  return json.data as TData;
+  if (typeof json === "object" && json !== null && "data" in json) {
+    return (json as { data: TData }).data;
+  }
+
+  throw new GraphQLRequestError("Missing GraphQL data", [], res.status);
 }

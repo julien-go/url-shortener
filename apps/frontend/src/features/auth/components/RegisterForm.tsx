@@ -18,10 +18,13 @@ export function RegisterForm() {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    const data = await registerMutation.mutateAsync({ email, password });
-
-    setSession(data.register.token);
-    navigate("/");
+    try {
+      const data = await registerMutation.mutateAsync({ email, password });
+      setSession(data.register.token);
+      navigate("/");
+    } catch {
+      // React Query will surface the error state.
+    }
   }
 
   const errorMessage = registerMutation.isError

@@ -1,4 +1,7 @@
 import * as React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../app/providers/useAuth";
+import { isGraphQLRequestError } from "../features/links/hooks/errors";
 import { DashboardLayout } from "../app/layouts/DashboardLayout";
 import { useMyLinks } from "../features/links/hooks/useMyLinks";
 import { useDeleteLink } from "../features/links/hooks/useDeleteLink";
@@ -22,12 +25,16 @@ import {
 const PAGE_SIZE = 10;
 
 export function MyLinksPage() {
+  const { token } = useAuth();
   const [cursorStack, setCursorStack] = React.useState<(string | null)[]>([
     null,
   ]);
+
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [copyMessage, setCopyMessage] = React.useState<string | null>(null);
   const currentCursor = cursorStack[cursorStack.length - 1];
 
-  const myLinksQuery = useMyLinks(PAGE_SIZE, currentCursor);
+  const myLinksQuery = useMyLinks(PAGE_SIZE, currentCursor, !!token);
   const deleteLinkMutation = useDeleteLink();
 
   const myLinksPage = myLinksQuery.data?.myLinks;
@@ -50,14 +57,33 @@ export function MyLinksPage() {
   };
 
   const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyMessage("Copied to clipboard.");
+    } catch {
+      setCopyMessage("Copy failed. Please copy manually.");
+    }
+    window.setTimeout(() => setCopyMessage(null), 2000);
   };
 
   const confirmAndDeleteLink = (linkId: string) => {
     const confirmed = window.confirm("Delete this link?");
     if (!confirmed) return;
-    deleteLinkMutation.mutate(linkId);
+    setDeletingId(linkId);
+    deleteLinkMutation.mutate(linkId, {
+      onSettled: () => setDeletingId(null),
+    });
   };
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const errorMessage = myLinksQuery.error
+    ? isGraphQLRequestError(myLinksQuery.error)
+      ? (myLinksQuery.error.errors?.[0]?.message ?? "Failed to load links.")
+      : "Failed to load links."
+    : null;
 
   return (
     <DashboardLayout maxWidth="xl">
@@ -88,7 +114,7 @@ export function MyLinksPage() {
             </div>
           ) : myLinksQuery.isError ? (
             <div className="rounded-lg border bg-card p-4 text-sm text-foreground">
-              Failed to load links.
+              {errorMessage}
             </div>
           ) : links.length === 0 ? (
             <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
@@ -170,9 +196,15 @@ export function MyLinksPage() {
                           variant="destructive"
                           size="sm"
                           onClick={() => confirmAndDeleteLink(link.id)}
-                          disabled={deleteLinkMutation.isPending}
+                          disabled={
+                            deleteLinkMutation.isPending &&
+                            deletingId === link.id
+                          }
                         >
-                          Delete
+                          {deleteLinkMutation.isPending &&
+                          deletingId === link.id
+                            ? "Deleting…"
+                            : "Delete"}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -181,6 +213,12 @@ export function MyLinksPage() {
               </Table>
             </div>
           )}
+
+          {copyMessage ? (
+            <div className="mt-3 text-sm text-muted-foreground">
+              {copyMessage}
+            </div>
+          ) : null}
 
           <div className="mt-4 flex items-center justify-between">
             <Button

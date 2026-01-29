@@ -18,10 +18,13 @@ export function LoginForm() {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    const data = await loginMutation.mutateAsync({ email, password });
-
-    setSession(data.login.token);
-    navigate("/");
+    try {
+      const data = await loginMutation.mutateAsync({ email, password });
+      setSession(data.login.token);
+      navigate("/");
+    } catch {
+      // React Query will surface the error state.
+    }
   }
 
   const errorMessage = loginMutation.isError
