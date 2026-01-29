@@ -1,5 +1,9 @@
 import { GraphQLRequestError } from "../../../lib/graphql/graphqlFetch";
 
+export function isGraphQLRequestError(e: unknown): e is GraphQLRequestError {
+  return e instanceof GraphQLRequestError;
+}
+
 export type CreateShortUrlReason =
   | "SLUG_TAKEN"
   | "INVALID_URL"
