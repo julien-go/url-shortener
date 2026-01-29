@@ -1,6 +1,19 @@
 import { getDayUtc } from "../../utils/dayUtc";
 import { findByCode, trackClick } from "./shortUrls.repo";
 import { ResolveShortUrlResult } from "./shortUrls.types";
+import {
+  AUTO_SLUG_LENGTH,
+  MAX_SLUG_RETRIES,
+  SLUG_MAX_LENGTH,
+} from "./shortUrls.constants";
+import { CreateShortUrlInput, CreateShortUrlResult } from "./shortUrls.types";
+import { createShortUrlRow } from "./shortUrls.repo";
+import {
+  isValidHttpUrl,
+  isValidSlug,
+  isUniqueViolation,
+  generateRandomSlug,
+} from "./shortUrl.utils";
 
 export async function resolveShortUrl(
   code: string,
@@ -18,4 +31,70 @@ export async function resolveShortUrl(
   }
 
   return { ok: true, targetUrl: link.target_url };
+}
+
+export async function createShortUrl(
+  input: CreateShortUrlInput,
+): Promise<CreateShortUrlResult> {
+  const originalUrl = input.originalUrl?.trim();
+  const customCode = input.code?.trim();
+
+  // 1) validation URL
+  if (!originalUrl || !isValidHttpUrl(originalUrl)) {
+    return { ok: false, reason: "INVALID_URL" };
+  }
+
+  // 2) validation slug custom (si présent)
+  if (customCode && !isValidSlug(customCode)) {
+    return { ok: false, reason: "INVALID_CODE" };
+  }
+
+  const publicBaseUrl = process.env.PUBLIC_BASE_URL;
+  if (!publicBaseUrl) throw new Error("PUBLIC_BASE_URL is not set");
+
+  // 3) slug custom => tentative unique
+  if (customCode) {
+    try {
+      const row = await createShortUrlRow({
+        code: customCode,
+        targetUrl: originalUrl,
+        userId: null,
+      });
+
+      return {
+        ok: true,
+        shortUrl: row,
+        shortLink: `${publicBaseUrl}/${row.code}`,
+      };
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        return { ok: false, reason: "SLUG_TAKEN" };
+      }
+      throw err;
+    }
+  }
+
+  // 4) slug auto => retries
+  for (let attempt = 0; attempt < MAX_SLUG_RETRIES; attempt++) {
+    const code = generateRandomSlug(AUTO_SLUG_LENGTH);
+
+    try {
+      const row = await createShortUrlRow({
+        code,
+        targetUrl: originalUrl,
+        userId: null,
+      });
+
+      return {
+        ok: true,
+        shortUrl: row,
+        shortLink: `${publicBaseUrl}/${row.code}`,
+      };
+    } catch (err) {
+      if (!isUniqueViolation(err)) throw err;
+      // collision => retry
+    }
+  }
+
+  throw new Error("Could not generate a unique slug after retries");
 }
