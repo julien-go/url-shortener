@@ -1,35 +1,40 @@
-import { Link } from "react-router-dom";
+import { DashboardLayout } from "../app/layouts/DashboardLayout";
 import { useAuth } from "../app/providers/useAuth";
 import { useMe } from "../features/auth/hooks/useMe";
 import { CreateShortUrlForm } from "../features/links/components/CreateShortUrlForm";
 
-export function HomePage() {
-  const { token, logout } = useAuth();
-  const me = useMe();
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 
-  const isSignedIn = !!token && !!me.data;
+export function HomePage() {
+  const { token } = useAuth();
+  const meQuery = useMe();
+  const isSignedIn = Boolean(token) && Boolean(meQuery.data);
 
   return (
-    <div style={{ maxWidth: 720, margin: "48px auto", padding: 16 }}>
-      <h1>URL Shortener</h1>
-      {!isSignedIn ? (
-        <div style={{ display: "flex", gap: 12 }}>
-          <Link to="/login">Login</Link>
-          <Link to="/register">Register</Link>
-        </div>
-      ) : (
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <span>
-            {me.isLoading
-              ? "Loading user..."
-              : me.data
-                ? `Signed in as ${me.data.email}`
-                : "Signed in"}
-          </span>
-          <button onClick={logout}>Logout</button>
-        </div>
-      )}
-      {isSignedIn && <CreateShortUrlForm />}
-    </div>
+    <DashboardLayout maxWidth="lg">
+      <Card className="rounded-2xl">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl">Home</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Create new short links and manage them from your dashboard.
+          </p>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {isSignedIn ? (
+            <CreateShortUrlForm />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Sign in to create and manage your links.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </DashboardLayout>
   );
 }

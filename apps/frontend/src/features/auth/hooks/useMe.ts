@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { me } from "../api/me.query";
 import { useAuth } from "../../../app/providers/useAuth";
+import { me } from "../api/me.query";
 
 export function useMe() {
   const { token } = useAuth();
