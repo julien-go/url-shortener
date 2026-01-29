@@ -1,10 +1,33 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "../app/providers/useAuth";
+import { useMe } from "../features/auth/hooks/useMe";
 import { CreateShortUrlForm } from "../features/links/components/CreateShortUrlForm";
 
-export const HomePage = () => {
+export function HomePage() {
+  const { token, logout } = useAuth();
+  const me = useMe();
+
   return (
-    <div>
-      <h1 className="p-6 text-3xl font-bold text-red-500">URL Shortener</h1>
-      <CreateShortUrlForm></CreateShortUrlForm>
+    <div style={{ maxWidth: 720, margin: "48px auto", padding: 16 }}>
+      <h1>URL Shortener</h1>
+      {!token ? (
+        <div style={{ display: "flex", gap: 12 }}>
+          <Link to="/login">Login</Link>
+          <Link to="/register">Register</Link>
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <span>
+            {me.isLoading
+              ? "Loading user..."
+              : me.data
+                ? `Signed in as ${me.data.email}`
+                : "Signed in"}
+          </span>
+          <button onClick={logout}>Logout</button>
+        </div>
+      )}
+      {token && <CreateShortUrlForm />}
     </div>
   );
-};
+}
