@@ -40,3 +40,11 @@ export type CreateShortUrlFailure = {
 export type CreateShortUrlResult =
   | CreateShortUrlSuccess
   | CreateShortUrlFailure;
+
+export type MyLinkRow = {
+  id: string;
+  code: string;
+  target_url: string;
+  created_at: string;
+  total_clicks: number;
+};

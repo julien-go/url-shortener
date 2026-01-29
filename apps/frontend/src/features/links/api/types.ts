@@ -14,3 +14,20 @@ export type CreateShortUrlResponse = {
     };
   };
 };
+
+export type MyLink = {
+  id: string;
+  code: string;
+  originalUrl: string;
+  createdAt: string;
+  clickCount: number;
+  shortLink: string;
+};
+
+export type MyLinksResponse = {
+  myLinks: {
+    totalCount: number;
+    nextCursor: string | null;
+    items: MyLink[];
+  };
+};
