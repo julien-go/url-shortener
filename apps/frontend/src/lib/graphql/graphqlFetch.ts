@@ -6,6 +6,12 @@ export function setGraphqlAuthTokenGetter(fn: () => string | null) {
   getAuthToken = fn;
 }
 
+let onUnauthenticated: (() => void) | null = null;
+
+export function setGraphqlOnUnauthenticated(fn: () => void) {
+  onUnauthenticated = fn;
+}
+
 export type GraphQLErrorItem = {
   message: string;
   locations?: { line: number; column: number }[];
@@ -43,8 +49,15 @@ export async function graphqlFetch<
   const json = await res.json();
 
   if (json?.errors?.length) {
+    const first = json.errors[0] as GraphQLErrorItem;
+    const code = first?.extensions?.code;
+
+    if (code === "UNAUTHENTICATED") {
+      onUnauthenticated?.();
+    }
+
     throw new GraphQLRequestError(
-      json.errors[0]?.message ?? "GraphQL error",
+      first?.message ?? "GraphQL error",
       json.errors as GraphQLErrorItem[],
       res.status,
     );

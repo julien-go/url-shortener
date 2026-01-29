@@ -35,6 +35,7 @@ export async function resolveShortUrl(
 
 export async function createShortUrl(
   input: CreateShortUrlInput,
+  userId: string,
 ): Promise<CreateShortUrlResult> {
   const originalUrl = input.originalUrl?.trim();
   const customCode = input.code?.trim();
@@ -58,7 +59,7 @@ export async function createShortUrl(
       const row = await createShortUrlRow({
         code: customCode,
         targetUrl: originalUrl,
-        userId: null,
+        userId: userId,
       });
 
       return {
@@ -82,7 +83,7 @@ export async function createShortUrl(
       const row = await createShortUrlRow({
         code,
         targetUrl: originalUrl,
-        userId: null,
+        userId: userId,
       });
 
       return {

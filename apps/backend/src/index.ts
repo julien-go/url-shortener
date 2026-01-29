@@ -6,7 +6,7 @@ import { env } from "./config/env";
 import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolvers";
 import { redirectRouter } from "./http/routes/redirect.route";
-import { createContext } from "./graphql/context";
+import { buildContext } from "./graphql/context";
 
 const app = express();
 
@@ -22,7 +22,7 @@ await server.start();
 app.use(
   "/graphql",
   expressMiddleware(server, {
-    context: async ({ req }) => createContext(req),
+    context: async ({ req }) => buildContext(req),
   }),
 );
 
