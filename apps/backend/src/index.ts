@@ -26,11 +26,11 @@ app.use(
   }),
 );
 
-app.use("/", redirectRouter);
-
 app.get("/healthz", (_req, res) => {
   res.json({ ok: true });
 });
+
+app.use("/", redirectRouter);
 
 app.listen(env.PORT, () => {
   console.log(`✅ Backend GraphQL: http://localhost:${env.PORT}/graphql`);

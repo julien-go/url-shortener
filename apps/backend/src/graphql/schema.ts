@@ -3,12 +3,20 @@ export const typeDefs = `#graphql
 
   type Query {
     health: String!,
-    me: User
+    me: User,
+    myLinks(limit: Int = 10, cursor: String): MyLinksPage!
+  }
+
+  type Mutation {
+  createShortUrl(input: CreateShortUrlInput!): CreateShortUrlPayload!,
+  register(input: RegisterInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  deleteLink(id: ID!): Boolean!
   }
 
   input CreateShortUrlInput {
   originalUrl: String!
-  code: String
+  code: String  
   }
 
 type ShortUrl {
@@ -16,7 +24,16 @@ type ShortUrl {
   code: String!
   originalUrl: String!
   createdAt: DateTime!
+  clickCount: Int!
+  shortLink: String!
 }
+
+type MyLinksPage {
+  items: [ShortUrl!]!
+  nextCursor: String
+  totalCount: Int!
+}
+
 
 type CreateShortUrlPayload {
   shortUrl: ShortUrl!
@@ -42,11 +59,5 @@ type User {
   id: ID!
   email: String!
   createdAt: DateTime!
-}
-
-type Mutation {
-  createShortUrl(input: CreateShortUrlInput!): CreateShortUrlPayload!,
-  register(input: RegisterInput!): AuthPayload!
-  login(input: LoginInput!): AuthPayload!
 }
 `;

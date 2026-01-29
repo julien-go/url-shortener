@@ -16,6 +16,12 @@ import {
   loginInputSchema,
   registerInputSchema,
 } from "../modules/auth/auth.schema";
+import {
+  countMyLinks,
+  findMyLinksPage,
+  softDeleteLink,
+} from "../modules/shortUrls/shortUrls.repo";
+import { decodeCursor, encodeCursor } from "./cursor";
 
 const createShortUrlInputSchema = z.object({
   originalUrl: z
@@ -36,6 +42,13 @@ const createShortUrlInputSchema = z.object({
 });
 
 export const resolvers = {
+  ShortUrl: {
+    shortLink: (parent: { code: string }) => {
+      const base = process.env.PUBLIC_BASE_URL ?? "http://localhost:4000";
+      return `${base.replace(/\/$/, "")}/${parent.code}`;
+    },
+  },
+
   Query: {
     health: () => "ok",
     me: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
@@ -57,6 +70,51 @@ export const resolvers = {
         email: user.email,
         createdAt: user.created_at,
       };
+    },
+    myLinks: async (
+      _: unknown,
+      args: { limit?: number; cursor?: string },
+      ctx: GraphQLContext,
+    ) => {
+      if (!ctx.user) {
+        throw new GraphQLError("Not authenticated", {
+          extensions: { code: "UNAUTHENTICATED" },
+        });
+      }
+
+      const limit = Math.max(1, Math.min(args.limit ?? 10, 50));
+
+      let decoded: { createdAt: string; id: string } | null = null;
+      if (args.cursor) {
+        try {
+          decoded = decodeCursor(args.cursor);
+        } catch {
+          throw new GraphQLError("Invalid cursor", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+      }
+
+      const [totalCount, rows] = await Promise.all([
+        countMyLinks(ctx.user.id),
+        findMyLinksPage({ userId: ctx.user.id, limit, cursor: decoded }),
+      ]);
+
+      const items = rows.map((r) => ({
+        id: r.id,
+        code: r.code,
+        originalUrl: r.target_url,
+        createdAt: r.created_at,
+        clickCount: r.total_clicks ?? 0,
+      }));
+
+      const last = rows[rows.length - 1];
+      const nextCursor =
+        last && rows.length === limit
+          ? encodeCursor(last.created_at, last.id)
+          : null;
+
+      return { items, nextCursor, totalCount };
     },
   },
 
@@ -104,6 +162,8 @@ export const resolvers = {
             code: result.shortUrl.code,
             originalUrl: result.shortUrl.target_url,
             createdAt: result.shortUrl.created_at,
+            clickCount: 0,
+            shortLink: result.shortLink,
           },
           shortLink: result.shortLink,
         };
@@ -206,6 +266,21 @@ export const resolvers = {
           createdAt: user.created_at,
         },
       };
+    },
+
+    deleteLink: async (
+      _: unknown,
+      { id }: { id: string },
+      ctx: GraphQLContext,
+    ) => {
+      if (!ctx.user) {
+        throw new GraphQLError("Not authenticated", {
+          extensions: { code: "UNAUTHENTICATED" },
+        });
+      }
+
+      const ok = await softDeleteLink({ userId: ctx.user.id, id });
+      return ok;
     },
   },
 };
