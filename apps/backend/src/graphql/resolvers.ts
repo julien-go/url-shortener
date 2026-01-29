@@ -1,6 +1,17 @@
 import { z } from "zod";
 import { GraphQLError } from "graphql";
+import type { GraphQLContext } from "./context";
 import { createShortUrl } from "../modules/shortUrls/shortUrls.service";
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+} from "../modules/users/users.repo";
+import {
+  hashPassword,
+  verifyPassword,
+  signToken,
+} from "../modules/auth/auth.service";
 
 const createShortUrlInputSchema = z.object({
   originalUrl: z
@@ -21,7 +32,25 @@ const createShortUrlInputSchema = z.object({
 });
 
 export const resolvers = {
-  Query: { health: () => "ok" },
+  Query: {
+    health: () => "ok",
+    me: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      if (!ctx.user) {
+        throw new GraphQLError("Not authenticated", {
+          extensions: { code: "UNAUTHENTICATED" },
+        });
+      }
+
+      const user = await findUserById(ctx.user.id);
+      if (!user) return null;
+
+      return {
+        id: user.id,
+        email: user.email,
+        createdAt: user.created_at,
+      };
+    },
+  },
 
   Mutation: {
     createShortUrl: async (_: unknown, { input }: { input: unknown }) => {
@@ -63,6 +92,65 @@ export const resolvers = {
           createdAt: result.shortUrl.created_at,
         },
         shortLink: result.shortLink,
+      };
+    },
+
+    register: async (
+      _: unknown,
+      { input }: { input: { email: string; password: string } },
+    ) => {
+      const email = input.email.trim().toLowerCase();
+
+      const existing = await findUserByEmail(email);
+      if (existing) {
+        throw new GraphQLError("Invalid credentials", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      const passwordHash = await hashPassword(input.password);
+      const user = await createUser(email, passwordHash);
+      const token = signToken({ sub: user.id, email: user.email });
+
+      return {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          createdAt: user.created_at,
+        },
+      };
+    },
+
+    login: async (
+      _: unknown,
+      { input }: { input: { email: string; password: string } },
+    ) => {
+      const email = input.email.trim().toLowerCase();
+
+      const user = await findUserByEmail(email);
+      if (!user) {
+        throw new GraphQLError("Invalid credentials", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      const ok = await verifyPassword(input.password, user.password_hash);
+      if (!ok) {
+        throw new GraphQLError("Invalid credentials", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      const token = signToken({ sub: user.id, email: user.email });
+
+      return {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          createdAt: user.created_at,
+        },
       };
     },
   },
