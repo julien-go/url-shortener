@@ -1,3 +1,4 @@
+import type { Request } from "express";
 import { verifyToken } from "../modules/auth/auth.service";
 
 export type GraphQLContext = {
@@ -14,24 +15,12 @@ function extractBearerToken(authHeader: unknown): string | null {
   return token.length ? token : null;
 }
 
-export async function createContext(req: {
-  headers: Record<string, string | string[] | undefined>;
-}): Promise<GraphQLContext> {
-  const authHeader = req.headers["authorization"];
-  const headerValue = Array.isArray(authHeader) ? authHeader[0] : authHeader;
-
-  const token = extractBearerToken(headerValue);
+export async function buildContext(req: Request): Promise<GraphQLContext> {
+  const token = extractBearerToken(req.headers.authorization);
   if (!token) return { user: null };
 
   const payload = verifyToken(token);
   if (!payload) return { user: null };
 
-  console.log("[auth] ctx.user =", payload?.sub ?? null);
-
-  return {
-    user: {
-      id: payload.sub,
-      email: payload.email,
-    },
-  };
+  return { user: { id: payload.sub, email: payload.email } };
 }

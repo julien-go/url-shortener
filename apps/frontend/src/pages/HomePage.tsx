@@ -7,10 +7,12 @@ export function HomePage() {
   const { token, logout } = useAuth();
   const me = useMe();
 
+  const isSignedIn = !!token && !!me.data;
+
   return (
     <div style={{ maxWidth: 720, margin: "48px auto", padding: 16 }}>
       <h1>URL Shortener</h1>
-      {!token ? (
+      {!isSignedIn ? (
         <div style={{ display: "flex", gap: 12 }}>
           <Link to="/login">Login</Link>
           <Link to="/register">Register</Link>
@@ -27,7 +29,7 @@ export function HomePage() {
           <button onClick={logout}>Logout</button>
         </div>
       )}
-      {token && <CreateShortUrlForm />}
+      {isSignedIn && <CreateShortUrlForm />}
     </div>
   );
 }
