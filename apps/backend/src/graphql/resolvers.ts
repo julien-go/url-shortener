@@ -46,7 +46,11 @@ export const resolvers = {
       }
 
       const user = await findUserById(ctx.user.id);
-      if (!user) return null;
+      if (!user) {
+        throw new GraphQLError("Not authenticated", {
+          extensions: { code: "UNAUTHENTICATED" },
+        });
+      }
 
       return {
         id: user.id,
