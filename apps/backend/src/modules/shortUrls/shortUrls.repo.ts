@@ -40,7 +40,7 @@ export async function trackClick(
 export async function createShortUrlRow(params: {
   code: string;
   targetUrl: string;
-  userId: string | null;
+  userId: string;
 }): Promise<ShortUrlRow> {
   const { code, targetUrl, userId } = params;
 

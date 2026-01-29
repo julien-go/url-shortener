@@ -1,26 +1,33 @@
 const API_URL = import.meta.env.VITE_API_URL as string;
 
-type GraphQLErrorItem = {
-  message: string;
-  extensions?: {
-    code?: string;
-    reason?: string;
-    validation?: unknown;
-  };
-};
+let getAuthToken: (() => string | null) | null = null;
 
-type GraphQLResponse<T> = {
-  data?: T;
-  errors?: GraphQLErrorItem[];
+export function setGraphqlAuthTokenGetter(fn: () => string | null) {
+  getAuthToken = fn;
+}
+
+let onUnauthenticated: (() => void) | null = null;
+
+export function setGraphqlOnUnauthenticated(fn: () => void) {
+  onUnauthenticated = fn;
+}
+
+export type GraphQLErrorItem = {
+  message: string;
+  locations?: { line: number; column: number }[];
+  path?: (string | number)[];
+  extensions?: Record<string, unknown>;
 };
 
 export class GraphQLRequestError extends Error {
   public readonly errors: GraphQLErrorItem[];
+  public readonly status?: number;
 
-  constructor(message: string, errors: GraphQLErrorItem[]) {
+  constructor(message: string, errors: GraphQLErrorItem[], status?: number) {
     super(message);
     this.name = "GraphQLRequestError";
     this.errors = errors;
+    this.status = status;
   }
 }
 
@@ -28,30 +35,33 @@ export async function graphqlFetch<
   TData,
   TVars extends Record<string, unknown> = Record<string, never>,
 >(query: string, variables?: TVars): Promise<TData> {
-  if (!API_URL) throw new Error("VITE_API_URL is not set");
+  const token = getAuthToken?.() ?? null;
 
   const res = await fetch(API_URL, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ query, variables }),
   });
 
-  const json = (await res.json()) as GraphQLResponse<TData>;
+  const json = await res.json();
 
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
+  if (json?.errors?.length) {
+    const first = json.errors[0] as GraphQLErrorItem;
+    const code = first?.extensions?.code;
 
-  if (json.errors?.length) {
+    if (code === "UNAUTHENTICATED") {
+      onUnauthenticated?.();
+    }
+
     throw new GraphQLRequestError(
-      json.errors[0]?.message ?? "GraphQL error",
-      json.errors,
+      first?.message ?? "GraphQL error",
+      json.errors as GraphQLErrorItem[],
+      res.status,
     );
   }
 
-  if (!json.data) {
-    throw new Error("No data returned from GraphQL");
-  }
-
-  return json.data;
+  return json.data as TData;
 }
