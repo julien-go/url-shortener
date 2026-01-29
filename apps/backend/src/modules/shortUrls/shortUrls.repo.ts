@@ -1,6 +1,6 @@
 import { pool } from "../../db/pool";
 import { DayUTC } from "../../utils/dayUtc";
-import { ShortUrlRow } from "./shortUrls.types";
+import { MyLinkRow, ShortUrlRow } from "./shortUrls.types";
 
 export async function findByCode(code: string): Promise<ShortUrlRow | null> {
   const norm = code.trim().toLowerCase();
@@ -54,4 +54,81 @@ export async function createShortUrlRow(params: {
   );
 
   return rows[0];
+}
+
+export async function countMyLinks(userId: string): Promise<number> {
+  const { rows } = await pool.query<{ count: number }>(
+    `
+    SELECT COUNT(*)::int AS count
+    FROM short_urls
+    WHERE user_id = $1
+      AND deleted_at IS NULL
+      AND is_active = true
+    `,
+    [userId],
+  );
+  return rows[0]?.count ?? 0;
+}
+
+export async function findMyLinksPage(params: {
+  userId: string;
+  limit: number;
+  cursor?: { createdAt: string; id: string } | null;
+}): Promise<MyLinkRow[]> {
+  const { userId, limit, cursor } = params;
+
+  const values: any[] = [userId, limit];
+  let cursorSql = "";
+
+  if (cursor) {
+    values.push(cursor.createdAt, cursor.id);
+    cursorSql = `
+      AND (
+        su.created_at < $3::timestamptz
+        OR (su.created_at = $3::timestamptz AND su.id < $4)
+      )
+    `;
+  }
+
+  const { rows } = await pool.query<MyLinkRow>(
+    `
+    SELECT
+      su.id,
+      su.code,
+      su.target_url,
+      su.created_at,
+      su.total_clicks
+    FROM short_urls su
+    WHERE su.user_id = $1
+      AND su.deleted_at IS NULL
+      AND su.is_active = true
+      ${cursorSql}
+    ORDER BY su.created_at DESC, su.id DESC
+    LIMIT $2
+    `,
+    values,
+  );
+
+  return rows;
+}
+
+export async function softDeleteLink(params: {
+  userId: string;
+  id: string;
+}): Promise<boolean> {
+  const { userId, id } = params;
+
+  const r = await pool.query(
+    `
+    UPDATE short_urls
+    SET deleted_at = now(),
+        is_active = false
+    WHERE id = $1
+      AND user_id = $2
+      AND deleted_at IS NULL
+    `,
+    [id, userId],
+  );
+
+  return (r.rowCount ?? 0) > 0;
 }
