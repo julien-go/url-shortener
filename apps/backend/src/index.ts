@@ -6,6 +6,7 @@ import { env } from "./config/env";
 import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolvers";
 import { redirectRouter } from "./http/routes/redirect.route";
+import { buildContext } from "./graphql/context";
 
 const app = express();
 
@@ -18,7 +19,12 @@ app.use(
 const server = new ApolloServer({ typeDefs, resolvers });
 await server.start();
 
-app.use("/graphql", expressMiddleware(server));
+app.use(
+  "/graphql",
+  expressMiddleware(server, {
+    context: async ({ req }) => buildContext(req),
+  }),
+);
 
 app.use("/", redirectRouter);
 

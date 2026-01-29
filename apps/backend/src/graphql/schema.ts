@@ -2,7 +2,8 @@ export const typeDefs = `#graphql
   scalar DateTime
 
   type Query {
-    health: String!
+    health: String!,
+    me: User
   }
 
   input CreateShortUrlInput {
@@ -22,8 +23,30 @@ type CreateShortUrlPayload {
   shortLink: String!
 }
 
-type Mutation {
-  createShortUrl(input: CreateShortUrlInput!): CreateShortUrlPayload!
+input RegisterInput {
+  email: String!
+  password: String!
 }
 
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+type User {
+  id: ID!
+  email: String!
+  createdAt: DateTime!
+}
+
+type Mutation {
+  createShortUrl(input: CreateShortUrlInput!): CreateShortUrlPayload!,
+  register(input: RegisterInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+}
 `;
