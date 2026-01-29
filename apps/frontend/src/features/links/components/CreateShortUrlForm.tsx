@@ -10,6 +10,7 @@ import { Card } from "../../../components/ui/card";
 export function CreateShortUrlForm() {
   const [originalUrl, setOriginalUrl] = React.useState("");
   const [code, setCode] = React.useState("");
+  const [copyMessage, setCopyMessage] = React.useState<string | null>(null);
 
   const createShortUrlMutation = useCreateShortUrl();
 
@@ -30,7 +31,13 @@ export function CreateShortUrlForm() {
 
   const copyCreatedLink = async () => {
     if (!created?.shortLink) return;
-    await navigator.clipboard.writeText(created.shortLink);
+    try {
+      await navigator.clipboard.writeText(created.shortLink);
+      setCopyMessage("Copied to clipboard.");
+    } catch {
+      setCopyMessage("Copy failed. Please copy manually.");
+    }
+    window.setTimeout(() => setCopyMessage(null), 2000);
   };
 
   return (
@@ -104,6 +111,9 @@ export function CreateShortUrlForm() {
                 </a>
               </Button>
             </div>
+            {copyMessage ? (
+              <p className="text-sm text-muted-foreground">{copyMessage}</p>
+            ) : null}
           </div>
         </Card>
       ) : null}
