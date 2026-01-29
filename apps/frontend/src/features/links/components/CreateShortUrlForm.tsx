@@ -1,76 +1,112 @@
-import { useState } from "react";
+import * as React from "react";
 import { useCreateShortUrl } from "../hooks/useCreateShortUrl";
 import { getCreateShortUrlErrorMessage } from "../hooks/errors";
 
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Card } from "../../../components/ui/card";
+
 export function CreateShortUrlForm() {
-  const [originalUrl, setOriginalUrl] = useState("");
-  const [code, setCode] = useState("");
+  const [originalUrl, setOriginalUrl] = React.useState("");
+  const [code, setCode] = React.useState("");
 
-  const mutation = useCreateShortUrl();
+  const createShortUrlMutation = useCreateShortUrl();
 
-  const errorMessage = mutation.error
-    ? getCreateShortUrlErrorMessage(mutation.error)
+  const errorMessage = createShortUrlMutation.error
+    ? getCreateShortUrlErrorMessage(createShortUrlMutation.error)
     : null;
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
 
-    mutation.mutate({
+    createShortUrlMutation.mutate({
       originalUrl,
       code: code.trim() || undefined,
     });
   }
 
-  const created = mutation.data?.createShortUrl;
+  const created = createShortUrlMutation.data?.createShortUrl;
+
+  const copyCreatedLink = async () => {
+    if (!created?.shortLink) return;
+    await navigator.clipboard.writeText(created.shortLink);
+  };
 
   return (
-    <section style={{ maxWidth: 520 }}>
-      <h1>Create a short link</h1>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold">Create a short link</h2>
+        <p className="text-sm text-muted-foreground">
+          Paste a URL and optionally choose a custom slug.
+        </p>
+      </div>
 
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-        <label>
-          <div>Original URL</div>
-          <input
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="originalUrl">Original URL</Label>
+          <Input
+            id="originalUrl"
             type="url"
             required
             value={originalUrl}
             onChange={(e) => setOriginalUrl(e.target.value)}
             placeholder="https://example.com"
           />
-        </label>
+        </div>
 
-        <label>
-          <div>Custom slug (optional)</div>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="code">Custom slug (optional)</Label>
+          <Input
+            id="code"
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="promo-2026"
           />
-        </label>
+        </div>
 
-        <button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Creating…" : "Create link"}
-        </button>
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={createShortUrlMutation.isPending}
+        >
+          {createShortUrlMutation.isPending ? "Creating…" : "Create link"}
+        </Button>
 
-        {errorMessage && <div role="alert">{errorMessage}</div>}
+        {errorMessage ? (
+          <p className="text-sm text-destructive">{errorMessage}</p>
+        ) : null}
       </form>
 
-      {created && (
-        <div style={{ marginTop: 16 }}>
-          <div>
-            <strong>Short link</strong>
-          </div>
-          <div>{created.shortLink}</div>
+      {created ? (
+        <Card className="rounded-xl p-4">
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Short link</div>
 
-          <button
-            type="button"
-            onClick={() => navigator.clipboard.writeText(created.shortLink)}
-          >
-            Copy
-          </button>
-        </div>
-      )}
-    </section>
+            <a
+              href={created.shortLink}
+              target="_blank"
+              rel="noreferrer"
+              className="block truncate font-mono text-sm underline underline-offset-4"
+              title={created.shortLink}
+            >
+              {created.shortLink}
+            </a>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={copyCreatedLink}>
+                Copy
+              </Button>
+              <Button asChild variant="secondary">
+                <a href={created.shortLink} target="_blank" rel="noreferrer">
+                  Open
+                </a>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+    </div>
   );
 }

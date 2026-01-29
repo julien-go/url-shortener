@@ -1,22 +1,30 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import * as React from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
 
-export function AuthLayout({
-  title,
-  children,
-}: {
+type AuthLayoutProps = {
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
-}) {
+};
+
+export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <div style={{ maxWidth: 420, margin: "64px auto", padding: 16 }}>
-      <h1 style={{ marginBottom: 8 }}>URL Shortener</h1>
-      <h2 style={{ marginTop: 0, marginBottom: 24 }}>{title}</h2>
-
-      {children}
-
-      <div style={{ marginTop: 16, opacity: 0.8 }}>
-        <Link to="/">Back to home</Link>
+    <div className="min-h-screen w-full bg-muted/40 px-4 py-10">
+      <div className="mx-auto w-full max-w-md">
+        <Card className="rounded-2xl">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl">{title}</CardTitle>
+            {subtitle ? (
+              <p className="text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </CardHeader>
+          <CardContent className="space-y-4">{children}</CardContent>
+        </Card>
       </div>
     </div>
   );
