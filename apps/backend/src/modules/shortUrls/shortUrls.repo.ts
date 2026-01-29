@@ -27,7 +27,6 @@ export async function trackClick(
       VALUES ($1, $2, 1)
       ON CONFLICT (short_url_id, day_utc)
       DO UPDATE SET clicks = daily_clicks.clicks + 1
-      RETURNING 1
     )
     UPDATE short_urls
     SET total_clicks = total_clicks + 1,
@@ -36,4 +35,23 @@ export async function trackClick(
     `,
     [shortUrlId, dayUtc],
   );
+}
+
+export async function createShortUrlRow(params: {
+  code: string;
+  targetUrl: string;
+  userId: string | null;
+}): Promise<ShortUrlRow> {
+  const { code, targetUrl, userId } = params;
+
+  const { rows } = await pool.query<ShortUrlRow>(
+    `
+    INSERT INTO short_urls (code, target_url, user_id)
+    VALUES ($1, $2, $3)
+    RETURNING id, code, target_url, created_at, deleted_at, is_active
+    `,
+    [code, targetUrl, userId],
+  );
+
+  return rows[0];
 }
