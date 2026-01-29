@@ -1,65 +1,79 @@
-import React, { useState } from "react";
+import * as React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegister } from "../hooks/useRegister";
 import { useAuth } from "../../../app/providers/useAuth";
 
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+
 export function RegisterForm() {
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const { setSession } = useAuth();
   const registerMutation = useRegister();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
 
-    const data = await registerMutation.mutateAsync({
-      email,
-      password,
-    });
+    const data = await registerMutation.mutateAsync({ email, password });
 
     setSession(data.register.token);
-    nav("/");
+    navigate("/");
   }
 
+  const errorMessage = registerMutation.isError
+    ? registerMutation.error instanceof Error
+      ? registerMutation.error.message
+      : "Registration failed"
+    : null;
+
   return (
-    <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-      <label style={{ display: "grid", gap: 6 }}>
-        <span>Email</span>
-        <input
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
+          placeholder="you@example.com"
           required
         />
-      </label>
+      </div>
 
-      <label style={{ display: "grid", gap: 6 }}>
-        <span>Password</span>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           type="password"
           autoComplete="new-password"
+          placeholder="••••••••"
           required
         />
-      </label>
+      </div>
 
-      <button type="submit" disabled={registerMutation.isPending}>
+      <Button
+        className="w-full"
+        type="submit"
+        disabled={registerMutation.isPending}
+      >
         {registerMutation.isPending ? "Creating..." : "Create account"}
-      </button>
+      </Button>
 
-      {registerMutation.isError ? (
-        <p style={{ color: "crimson", margin: 0 }}>
-          {registerMutation.error instanceof Error
-            ? registerMutation.error.message
-            : "Registration failed"}
-        </p>
+      {errorMessage ? (
+        <p className="text-sm text-destructive">{errorMessage}</p>
       ) : null}
 
-      <p style={{ margin: 0, opacity: 0.9 }}>
-        Already have an account? <Link to="/login">Sign in</Link>
+      <p className="text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link to="/login" className="underline hover:text-foreground">
+          Sign in
+        </Link>
       </p>
     </form>
   );
