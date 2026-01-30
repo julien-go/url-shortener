@@ -104,6 +104,7 @@ export function MyLinksPage() {
           <Button
             variant="secondary"
             onClick={() => myLinksQuery.refetch()}
+            className="cursor-pointer"
             disabled={myLinksQuery.isFetching}
           >
             Refresh
@@ -158,6 +159,7 @@ export function MyLinksPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="cursor-pointer"
                             onClick={() => copyToClipboard(link.shortLink)}
                           >
                             Copy
@@ -174,6 +176,7 @@ export function MyLinksPage() {
                           <Button
                             variant="secondary"
                             size="sm"
+                            className="cursor-pointer"
                             onClick={() => navigate(`/links/${link.id}/stats`)}
                           >
                             Statistics
@@ -206,6 +209,7 @@ export function MyLinksPage() {
                           variant="destructive"
                           size="sm"
                           onClick={() => confirmAndDeleteLink(link.id)}
+                          className="cursor-pointer"
                           disabled={
                             deleteLinkMutation.isPending &&
                             deletingId === link.id
@@ -230,27 +234,35 @@ export function MyLinksPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={goToPreviousPage}
-              disabled={!canGoPrevious || myLinksQuery.isFetching}
-            >
-              Previous
-            </Button>
+          {(canGoPrevious || canGoNext) && (
+            <div className="mt-4 flex items-center justify-between">
+              {canGoPrevious ? (
+                <Button
+                  variant="outline"
+                  onClick={goToPreviousPage}
+                  disabled={myLinksQuery.isFetching}
+                >
+                  Previous
+                </Button>
+              ) : (
+                <div />
+              )}
 
-            <div className="text-sm text-muted-foreground">
-              {myLinksQuery.isFetching ? "Loading…" : ""}
+              <div className="text-sm text-muted-foreground">
+                {myLinksQuery.isFetching ? "Loading…" : ""}
+              </div>
+
+              {canGoNext && (
+                <Button
+                  variant="outline"
+                  onClick={goToNextPage}
+                  disabled={myLinksQuery.isFetching}
+                >
+                  Next
+                </Button>
+              )}
             </div>
-
-            <Button
-              variant="outline"
-              onClick={goToNextPage}
-              disabled={!canGoNext || myLinksQuery.isFetching}
-            >
-              Next
-            </Button>
-          </div>
+          )}
         </CardContent>
       </Card>
     </DashboardLayout>
