@@ -1,4 +1,3 @@
-import { getDayUtc } from "../../utils/dayUtc";
 import { findByCode, trackClick } from "./shortUrls.repo";
 import { ResolveShortUrlResult } from "./shortUrls.types";
 import {
@@ -26,8 +25,7 @@ export async function resolveShortUrl(
   if (!link.is_active) return { ok: false, reason: "INACTIVE" };
 
   if (opts?.track !== false) {
-    const dayUtc = getDayUtc();
-    void trackClick(link.id, dayUtc).catch(console.error);
+    void trackClick(link.id).catch(console.error);
   }
 
   return { ok: true, targetUrl: link.target_url };
