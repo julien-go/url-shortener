@@ -11,7 +11,7 @@ export async function findLinkStats(params: {
   const { rows } = await pool.query<LinkStatsRow>(
     `
     WITH su AS (
-      SELECT id, total_clicks, last_clicked_at
+      SELECT id, code, target_url, created_at, total_clicks, last_clicked_at
       FROM short_urls
       WHERE id = $1
         AND user_id = $2
@@ -27,6 +27,9 @@ export async function findLinkStats(params: {
     )
     SELECT
       (SELECT id FROM su) AS link_id,
+      (SELECT code FROM su) AS code,
+      (SELECT target_url FROM su) AS target_url,
+      (SELECT created_at FROM su)::text AS created_at,
       (SELECT total_clicks FROM su) AS total_clicks,
       (SELECT last_clicked_at FROM su)::text AS last_clicked_at,
       d.day_utc::text AS day_utc,
@@ -43,12 +46,20 @@ export async function findLinkStats(params: {
 
   if (rows.length === 0) return null;
 
-  const first = rows[0];
+  const firstRow = rows[0];
 
   return {
-    linkId: first.link_id,
-    totalClicks: first.total_clicks,
-    lastClickedAt: first.last_clicked_at,
-    series: rows.map((r) => ({ dayUtc: r.day_utc, clicks: r.clicks })),
+    linkId: firstRow.link_id,
+    totalClicks: firstRow.total_clicks, // bigint => string
+    lastClickedAt: firstRow.last_clicked_at, // string | null
+    link: {
+      id: firstRow.link_id,
+      code: firstRow.code,
+      originalUrl: firstRow.target_url,
+      createdAt: firstRow.created_at,
+      clickCount: Number(firstRow.total_clicks ?? 0),
+      // shortLink sera résolu par ShortUrl.shortLink (field resolver)
+    },
+    series: rows.map((row) => ({ dayUtc: row.day_utc, clicks: row.clicks })),
   };
 }

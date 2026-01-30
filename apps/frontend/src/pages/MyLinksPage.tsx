@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../app/providers/useAuth";
 import { isGraphQLRequestError } from "../features/links/hooks/errors";
 import { DashboardLayout } from "../app/layouts/DashboardLayout";
@@ -25,6 +26,8 @@ import {
 const PAGE_SIZE = 10;
 
 export function MyLinksPage() {
+  const navigate = useNavigate();
+
   const { token } = useAuth();
   const [cursorStack, setCursorStack] = React.useState<(string | null)[]>([
     null,
@@ -167,6 +170,13 @@ export function MyLinksPage() {
                             >
                               Open
                             </a>
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate(`/links/${link.id}/stats`)}
+                          >
+                            Statistics
                           </Button>
                         </div>
                       </TableCell>
