@@ -48,3 +48,20 @@ export type MyLinkRow = {
   created_at: string;
   total_clicks: number;
 };
+
+export type StatsRange = "DAYS_7" | "DAYS_30";
+
+export type LinkStatsRow = {
+  link_id: string;
+  total_clicks: string;
+  last_clicked_at: string | null;
+  day_utc: string;
+  clicks: number;
+};
+
+export type LinkStats = {
+  linkId: string;
+  totalClicks: string;
+  lastClickedAt: string | null;
+  series: { dayUtc: string; clicks: number }[];
+};

@@ -1,5 +1,4 @@
 import { pool } from "../../db/pool";
-import { DayUTC } from "../../utils/dayUtc";
 import { MyLinkRow, ShortUrlRow } from "./shortUrls.types";
 
 export async function findByCode(code: string): Promise<ShortUrlRow | null> {
@@ -16,24 +15,23 @@ export async function findByCode(code: string): Promise<ShortUrlRow | null> {
   return rows[0] ?? null;
 }
 
-export async function trackClick(
-  shortUrlId: string,
-  dayUtc: DayUTC,
-): Promise<void> {
+export async function trackClick(shortUrlId: string): Promise<void> {
   await pool.query(
     `
     WITH upsert_daily AS (
       INSERT INTO daily_clicks (short_url_id, day_utc, clicks)
-      VALUES ($1, $2, 1)
+      VALUES ($1, (now() AT TIME ZONE 'utc')::date, 1)
       ON CONFLICT (short_url_id, day_utc)
       DO UPDATE SET clicks = daily_clicks.clicks + 1
+      RETURNING 1
     )
     UPDATE short_urls
     SET total_clicks = total_clicks + 1,
-        last_clicked_at = now()
+        last_clicked_at = now(),
+        updated_at = now()
     WHERE id = $1
     `,
-    [shortUrlId, dayUtc],
+    [shortUrlId],
   );
 }
 

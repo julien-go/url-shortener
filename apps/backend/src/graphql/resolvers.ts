@@ -22,6 +22,7 @@ import {
   softDeleteLink,
 } from "../modules/shortUrls/shortUrls.repo";
 import { decodeCursor, encodeCursor } from "./cursor";
+import { findLinkStats } from "../modules/shortUrls/shortUrls.stats.repo";
 
 const createShortUrlInputSchema = z.object({
   originalUrl: z
@@ -39,6 +40,15 @@ const createShortUrlInputSchema = z.object({
     .max(32)
     .regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters, numbers and '-'")
     .optional(),
+});
+
+const linkStatsArgsSchema = z.object({
+  linkId: z.string().uuid(),
+  range: z.enum(["DAYS_7", "DAYS_30"]),
+});
+
+const deleteLinkArgsSchema = z.object({
+  id: z.string().uuid(),
 });
 
 export const resolvers = {
@@ -115,6 +125,44 @@ export const resolvers = {
           : null;
 
       return { items, nextCursor, totalCount };
+    },
+
+    linkStats: async (
+      _: unknown,
+      args: { linkId: string; range: "DAYS_7" | "DAYS_30" },
+      ctx: GraphQLContext,
+    ) => {
+      if (!ctx.user) {
+        throw new GraphQLError("Not authenticated", {
+          extensions: { code: "UNAUTHENTICATED" },
+        });
+      }
+
+      const parsed = linkStatsArgsSchema.safeParse(args);
+      if (!parsed.success) {
+        throw new GraphQLError("Invalid input", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            validation: parsed.error.flatten(),
+          },
+        });
+      }
+
+      const days = args.range === "DAYS_7" ? 7 : 30;
+
+      const stats = await findLinkStats({
+        userId: ctx.user.id,
+        linkId: args.linkId,
+        days,
+      });
+
+      if (!stats) {
+        throw new GraphQLError("Link not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+
+      return stats;
     },
   },
 
@@ -278,8 +326,19 @@ export const resolvers = {
           extensions: { code: "UNAUTHENTICATED" },
         });
       }
-
-      const ok = await softDeleteLink({ userId: ctx.user.id, id });
+      const parsed = deleteLinkArgsSchema.safeParse({ id });
+      if (!parsed.success) {
+        throw new GraphQLError("Invalid input", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            validation: parsed.error.flatten(),
+          },
+        });
+      }
+      const ok = await softDeleteLink({
+        userId: ctx.user.id,
+        id: parsed.data.id,
+      });
       return ok;
     },
   },
