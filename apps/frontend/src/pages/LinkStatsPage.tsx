@@ -20,12 +20,6 @@ function formatLastClickedAt(value: string | null) {
   return dateValue.toLocaleString();
 }
 
-function formatCreatedAt(value: string) {
-  const dateValue = new Date(value);
-  if (Number.isNaN(dateValue.getTime())) return value;
-  return dateValue.toLocaleString();
-}
-
 export function LinkStatsPage() {
   const params = useParams<{ id: string }>();
   const linkId = params.id ?? "";
@@ -37,6 +31,30 @@ export function LinkStatsPage() {
   const linkStats = linkStatsQuery.data?.linkStats;
   const linkDetails = linkStats?.link ?? null;
   const series = linkStats?.series ?? [];
+
+  const [copyStatus, setCopyStatus] = React.useState<
+    "idle" | "copied" | "error"
+  >("idle");
+
+  async function handleCopyShortLink() {
+    const shortLink = linkDetails?.shortLink;
+    if (!shortLink) return;
+
+    try {
+      await navigator.clipboard.writeText(shortLink);
+      setCopyStatus("copied");
+
+      window.setTimeout(() => {
+        setCopyStatus("idle");
+      }, 1200);
+    } catch {
+      setCopyStatus("error");
+
+      window.setTimeout(() => {
+        setCopyStatus("idle");
+      }, 1200);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 p-4">
@@ -65,8 +83,38 @@ export function LinkStatsPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Link</CardTitle>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleCopyShortLink}
+              disabled={!linkDetails?.shortLink}
+            >
+              {copyStatus === "copied"
+                ? "Copied"
+                : copyStatus === "error"
+                  ? "Copy failed"
+                  : "Copy"}
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              disabled={!linkDetails?.shortLink}
+            >
+              <a
+                href={linkDetails?.shortLink ?? "#"}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open
+              </a>
+            </Button>
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-3 text-sm">
@@ -90,15 +138,10 @@ export function LinkStatsPage() {
                 <div className="break-all">{linkDetails.originalUrl}</div>
               </div>
 
-              <div className="flex flex-wrap gap-6 pt-2">
+              <div className="flex flex-wrap gap-6 pt-1">
                 <div>
                   <div className="text-muted-foreground">Code</div>
                   <div className="font-mono">{linkDetails.code}</div>
-                </div>
-
-                <div>
-                  <div className="text-muted-foreground">Created</div>
-                  <div>{formatCreatedAt(linkDetails.createdAt)}</div>
                 </div>
 
                 <div>
@@ -168,7 +211,9 @@ export function LinkStatsPage() {
               </Button>
             </div>
           ) : series.length === 0 ? (
-            <div className="text-sm text-muted-foreground">No data yet.</div>
+            <div className="text-sm text-muted-foreground">
+              No clicks yet. Share your link to get started.
+            </div>
           ) : (
             <ClicksBarChart series={series} />
           )}
