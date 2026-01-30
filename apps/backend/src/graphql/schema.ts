@@ -5,6 +5,7 @@ export const typeDefs = `#graphql
     health: String!,
     me: User,
     myLinks(limit: Int = 10, cursor: String): MyLinksPage!
+    linkStats(linkId: ID!, range: StatsRange!): LinkStats!
   }
 
   type Mutation {
@@ -59,5 +60,22 @@ type User {
   id: ID!
   email: String!
   createdAt: DateTime!
+}
+
+enum StatsRange {
+  DAYS_7
+  DAYS_30
+}
+
+type ClickPoint {
+  dayUtc: String!
+  clicks: Int!
+}
+
+type LinkStats {
+  linkId: ID!
+  totalClicks: String!
+  lastClickedAt: String
+  series: [ClickPoint!]!
 }
 `;
