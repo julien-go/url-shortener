@@ -87,7 +87,11 @@ export function DashboardLayout({
                       ? meQuery.data.email
                       : "Signed in"}
                 </Badge>
-                <Button variant="outline" onClick={logout}>
+                <Button
+                  variant="outline"
+                  onClick={logout}
+                  className="cursor-pointer"
+                >
                   Sign out
                 </Button>
               </div>
