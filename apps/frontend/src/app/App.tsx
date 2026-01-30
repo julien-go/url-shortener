@@ -4,6 +4,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { MyLinksPage } from "../pages/MyLinksPage";
 import { useAuth } from "./providers/useAuth";
+import { LinkStatsPage } from "../pages/LinkStatsPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -24,6 +25,14 @@ export default function App() {
         element={
           <RequireAuth>
             <MyLinksPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/links/:id/stats"
+        element={
+          <RequireAuth>
+            <LinkStatsPage />
           </RequireAuth>
         }
       />

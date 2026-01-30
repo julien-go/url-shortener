@@ -77,5 +77,8 @@ type LinkStats {
   totalClicks: String!
   lastClickedAt: String
   series: [ClickPoint!]!
+
+  link: ShortUrl!
 }
+
 `;
