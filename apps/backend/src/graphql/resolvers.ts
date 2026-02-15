@@ -23,33 +23,12 @@ import {
 } from "../modules/shortUrls/shortUrls.repo";
 import { decodeCursor, encodeCursor } from "./cursor";
 import { findLinkStats } from "../modules/shortUrls/shortUrls.stats.repo";
-
-const createShortUrlInputSchema = z.object({
-  originalUrl: z
-    .string()
-    .trim()
-    .url()
-    .refine(
-      (url) => url.startsWith("http://") || url.startsWith("https://"),
-      "Only http/https URLs are allowed",
-    ),
-  code: z
-    .string()
-    .trim()
-    .min(3)
-    .max(32)
-    .regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters, numbers and '-'")
-    .optional(),
-});
-
-const linkStatsArgsSchema = z.object({
-  linkId: z.string().uuid(),
-  range: z.enum(["DAYS_7", "DAYS_30"]),
-});
-
-const deleteLinkArgsSchema = z.object({
-  id: z.string().uuid(),
-});
+import {
+  createShortUrlInputSchema,
+  deleteLinkArgsSchema,
+  linkStatsArgsSchema,
+  myLinksArgsSchema,
+} from "./resolvers.schema";
 
 export const resolvers = {
   ShortUrl: {
@@ -83,7 +62,7 @@ export const resolvers = {
     },
     myLinks: async (
       _: unknown,
-      args: { limit?: number; cursor?: string },
+      args: { limit?: number; cursor?: string | null },
       ctx: GraphQLContext,
     ) => {
       if (!ctx.user) {
@@ -92,12 +71,22 @@ export const resolvers = {
         });
       }
 
-      const limit = Math.max(1, Math.min(args.limit ?? 10, 50));
+      const parsed = myLinksArgsSchema.safeParse(args ?? {});
+      if (!parsed.success) {
+        throw new GraphQLError("Invalid input", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            validation: parsed.error.flatten(),
+          },
+        });
+      }
+
+      const limit = parsed.data.limit ?? 10;
 
       let decoded: { createdAt: string; id: string } | null = null;
-      if (args.cursor) {
+      if (parsed.data.cursor) {
         try {
-          decoded = decodeCursor(args.cursor);
+          decoded = decodeCursor(parsed.data.cursor);
         } catch {
           throw new GraphQLError("Invalid cursor", {
             extensions: { code: "BAD_USER_INPUT" },
@@ -110,7 +99,9 @@ export const resolvers = {
         findMyLinksPage({ userId: ctx.user.id, limit, cursor: decoded }),
       ]);
 
-      const items = rows.map((r) => ({
+      const pageRows = rows.slice(0, limit);
+
+      const items = pageRows.map((r) => ({
         id: r.id,
         code: r.code,
         originalUrl: r.target_url,
@@ -118,11 +109,10 @@ export const resolvers = {
         clickCount: r.total_clicks ?? 0,
       }));
 
-      const last = rows[rows.length - 1];
+      const hasNextPage = rows.length > limit;
+      const last = pageRows[pageRows.length - 1];
       const nextCursor =
-        last && rows.length === limit
-          ? encodeCursor(last.created_at, last.id)
-          : null;
+        hasNextPage && last ? encodeCursor(last.created_at, last.id) : null;
 
       return { items, nextCursor, totalCount };
     },
@@ -148,11 +138,11 @@ export const resolvers = {
         });
       }
 
-      const days = args.range === "DAYS_7" ? 7 : 30;
+      const days = parsed.data.range === "DAYS_7" ? 7 : 30;
 
       const stats = await findLinkStats({
         userId: ctx.user.id,
-        linkId: args.linkId,
+        linkId: parsed.data.linkId,
         days,
       });
 

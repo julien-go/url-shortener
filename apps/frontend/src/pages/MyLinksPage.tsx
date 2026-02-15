@@ -2,7 +2,7 @@ import * as React from "react";
 import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../app/providers/useAuth";
-import { isGraphQLRequestError } from "../features/links/hooks/errors";
+import { getGraphQLRequestErrorMessage } from "../features/links/hooks/errors";
 import { DashboardLayout } from "../app/layouts/DashboardLayout";
 import { useMyLinks } from "../features/links/hooks/useMyLinks";
 import { useDeleteLink } from "../features/links/hooks/useDeleteLink";
@@ -45,6 +45,13 @@ export function MyLinksPage() {
 
   const canGoPrevious = cursorStack.length > 1;
   const canGoNext = Boolean(myLinksPage?.nextCursor);
+  const totalCount = myLinksPage?.totalCount ?? 0;
+  const currentPage = cursorStack.length;
+  const rangeStart = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd =
+    totalCount === 0
+      ? 0
+      : Math.min((currentPage - 1) * PAGE_SIZE + links.length, totalCount);
 
   const goToNextPage = () => {
     if (!myLinksPage?.nextCursor) return;
@@ -74,6 +81,7 @@ export function MyLinksPage() {
     if (!confirmed) return;
     setDeletingId(linkId);
     deleteLinkMutation.mutate(linkId, {
+      onSuccess: () => setCursorStack([null]),
       onSettled: () => setDeletingId(null),
     });
   };
@@ -83,9 +91,7 @@ export function MyLinksPage() {
   }
 
   const errorMessage = myLinksQuery.error
-    ? isGraphQLRequestError(myLinksQuery.error)
-      ? (myLinksQuery.error.errors?.[0]?.message ?? "Failed to load links.")
-      : "Failed to load links."
+    ? getGraphQLRequestErrorMessage(myLinksQuery.error, "Failed to load links.")
     : null;
 
   return (
@@ -97,7 +103,7 @@ export function MyLinksPage() {
             <p className="text-sm text-muted-foreground">
               {myLinksQuery.isLoading
                 ? "…"
-                : `${myLinksPage?.totalCount ?? 0} link(s)`}
+                : `${totalCount} link(s) • Page ${currentPage}`}
             </p>
           </div>
 
@@ -121,9 +127,23 @@ export function MyLinksPage() {
               {errorMessage}
             </div>
           ) : links.length === 0 ? (
-            <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-              No links yet.
-            </div>
+            canGoPrevious ? (
+              <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+                This page is no longer available.
+                <Button
+                  variant="link"
+                  className="ml-2 h-auto cursor-pointer p-0"
+                  onClick={goToPreviousPage}
+                  disabled={myLinksQuery.isFetching}
+                >
+                  Go back to previous page
+                </Button>
+              </div>
+            ) : (
+              <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+                No links yet.
+              </div>
+            )
           ) : (
             <div className="rounded-xl border bg-card">
               <Table>
@@ -249,7 +269,9 @@ export function MyLinksPage() {
               )}
 
               <div className="text-sm text-muted-foreground">
-                {myLinksQuery.isFetching ? "Loading…" : ""}
+                {myLinksQuery.isFetching
+                  ? "Loading…"
+                  : `${rangeStart}–${rangeEnd} / ${totalCount}`}
               </div>
 
               {canGoNext && (
