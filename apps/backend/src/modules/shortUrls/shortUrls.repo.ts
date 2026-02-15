@@ -75,7 +75,8 @@ export async function findMyLinksPage(params: {
 }): Promise<MyLinkRow[]> {
   const { userId, limit, cursor } = params;
 
-  const values: any[] = [userId, limit];
+  const pageSize = limit + 1;
+  const values: any[] = [userId, pageSize];
   let cursorSql = "";
 
   if (cursor) {

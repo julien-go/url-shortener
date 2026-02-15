@@ -12,6 +12,11 @@ import { useLinkStats } from "../features/links/hooks/useLinkStats";
 
 import { ClicksBarChart } from "../features/links/components/ClicksBarChart";
 import { DashboardLayout } from "../app/layouts/DashboardLayout";
+import {
+  getGraphQLErrorCode,
+  getGraphQLRequestErrorMessage,
+  isGraphQLRequestError,
+} from "../features/links/hooks/errors";
 
 type StatsRange = "DAYS_7" | "DAYS_30";
 
@@ -22,18 +27,11 @@ function formatLastClickedAt(value: string | null) {
   return dateValue.toLocaleString();
 }
 
-type GraphQLErrorItem = {
-  extensions?: { code?: string };
-};
-
 function shouldRedirectToLinks(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
+  if (!isGraphQLRequestError(error)) return false;
 
-  const maybeError = error as { errors?: GraphQLErrorItem[] };
-  if (!Array.isArray(maybeError.errors)) return false;
-
-  return maybeError.errors.some((errorItem) => {
-    const code = errorItem.extensions?.code;
+  return error.errors.some((errorItem) => {
+    const code = getGraphQLErrorCode(errorItem);
     return code === "BAD_USER_INPUT" || code === "NOT_FOUND";
   });
 }
@@ -63,15 +61,6 @@ export function LinkStatsPage() {
   if (shouldRedirectToLinks(linkStatsQuery.error)) {
     return <Navigate to="/links" replace />;
   }
-
-  console.log("[LinkStatsPage]", {
-    linkId,
-    range,
-    isLoading: linkStatsQuery.isLoading,
-    isFetching: linkStatsQuery.isFetching,
-    error: linkStatsQuery.error,
-    data: linkStatsQuery.data,
-  });
 
   const linkStats = linkStatsQuery.data?.linkStats;
   const linkDetails = linkStats?.link ?? null;
@@ -164,7 +153,10 @@ export function LinkStatsPage() {
               <div className="text-muted-foreground">Loading link details…</div>
             ) : linkStatsQuery.error ? (
               <div className="text-muted-foreground">
-                Unable to load link details.
+                {getGraphQLRequestErrorMessage(
+                  linkStatsQuery.error,
+                  "Unable to load link details.",
+                )}
               </div>
             ) : linkDetails ? (
               <>
