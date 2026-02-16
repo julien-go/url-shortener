@@ -1,0 +1,106 @@
+name: CI (Backend)
+
+on:
+  pull_request:
+    paths:
+      - "apps/backend/**"
+      - "migrations/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/**"
+  push:
+    branches: [main]
+    paths:
+      - "apps/backend/**"
+      - "migrations/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/**"
+
+concurrency:
+  group: ci-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Backend - quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter ./apps/backend lint
+
+      - name: Typecheck
+        run: pnpm --filter ./apps/backend typecheck
+
+      - name: Test
+        run: pnpm --filter ./apps/backend test
+
+      - name: Build
+        run: pnpm --filter ./apps/backend build
+
+  integration:
+    name: Backend - integration (Postgres + migrations)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # DB local du job CI (pas de SSL)
+      DBMATE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?sslmode=disable
+      # On pointe directement vers le dossier migrations à la racine du repo
+      DBMATE_MIGRATIONS_DIR: ${{ github.workspace }}/migrations
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations (dbmate)
+        run: pnpm --filter ./apps/backend exec dbmate up
+
+      - name: Test (with DB available)
+        run: pnpm --filter ./apps/backend test

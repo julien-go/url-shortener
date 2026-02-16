@@ -1,3 +1,4 @@
+-- migrate:up
 DELETE FROM short_urls
 WHERE user_id IS NULL;
 
@@ -18,3 +19,10 @@ BEGIN
     ON DELETE CASCADE;
   END IF;
 END $$;
+
+-- migrate:down
+ALTER TABLE short_urls
+ALTER COLUMN user_id DROP NOT NULL;
+
+ALTER TABLE short_urls
+DROP CONSTRAINT IF EXISTS short_urls_user_id_fkey;

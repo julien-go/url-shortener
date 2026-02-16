@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { GraphQLError } from "graphql";
 import type { GraphQLContext } from "./context";
 import { createShortUrl } from "../modules/shortUrls/shortUrls.service";
