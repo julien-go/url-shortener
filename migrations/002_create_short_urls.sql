@@ -1,3 +1,4 @@
+-- migrate:up
 CREATE TABLE IF NOT EXISTS short_urls (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id         uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -22,3 +23,9 @@ ON short_urls (user_id);
 
 CREATE INDEX IF NOT EXISTS short_urls_created_at_idx
 ON short_urls (created_at);
+
+-- migrate:down
+DROP INDEX IF EXISTS public.short_urls_created_at_idx;
+DROP INDEX IF EXISTS public.short_urls_user_id_idx;
+DROP INDEX IF EXISTS public.short_urls_code_lower_unique;
+DROP TABLE IF EXISTS public.short_urls;
