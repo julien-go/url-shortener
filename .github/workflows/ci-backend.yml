@@ -37,8 +37,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -75,9 +73,7 @@ jobs:
           --health-retries=5
 
     env:
-      # DB local du job CI (pas de SSL)
       DBMATE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?sslmode=disable
-      # On pointe directement vers le dossier migrations à la racine du repo
       DBMATE_MIGRATIONS_DIR: ${{ github.workspace }}/migrations
 
     steps:
@@ -88,12 +84,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
