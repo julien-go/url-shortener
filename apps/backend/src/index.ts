@@ -7,13 +7,21 @@ import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolvers";
 import { redirectRouter } from "./http/routes/redirect.route";
 import { buildContext } from "./graphql/context";
+import { createShortUrlRateLimit } from "./security/rateLimit.middleware";
+import { securityHeadersMiddleware } from "./security/headers";
+import { getRateLimitMetricsSnapshot } from "./security/rateLimit";
 
 const app = express();
+
+app.set("trust proxy", env.TRUST_PROXY);
+app.use(securityHeadersMiddleware);
 
 app.use(
   "/graphql",
   cors({ origin: env.FRONTEND_ORIGIN, credentials: true }),
   express.json(),
+  express.json({ limit: env.JSON_BODY_LIMIT }),
+  createShortUrlRateLimit,
 );
 
 const server = new ApolloServer({ typeDefs, resolvers });
@@ -28,6 +36,12 @@ app.use(
 
 app.get("/healthz", (_req, res) => {
   res.json({ ok: true });
+});
+
+app.get("/metrics", (_req, res) => {
+  res.json({
+    rateLimit: getRateLimitMetricsSnapshot(),
+  });
 });
 
 app.use("/", redirectRouter);
