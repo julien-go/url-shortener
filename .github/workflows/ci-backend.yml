@@ -73,6 +73,7 @@ jobs:
           --health-retries=5
 
     env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?sslmode=disable
       DBMATE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?sslmode=disable
       DBMATE_MIGRATIONS_DIR: ${{ github.workspace }}/migrations
 
