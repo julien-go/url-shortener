@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "db:migrate": "dotenv -e ../../.env -- cross-env DBMATE_MIGRATIONS_DIR=../../migrations dbmate up",
     "db:status": "dotenv -e ../../.env -- cross-env DBMATE_MIGRATIONS_DIR=../../migrations dbmate status",
     "db:rollback": "dotenv -e ../../.env -- cross-env DBMATE_MIGRATIONS_DIR=../../migrations dbmate down"
