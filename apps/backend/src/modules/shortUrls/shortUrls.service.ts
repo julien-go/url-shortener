@@ -8,7 +8,7 @@ import {
   isValidSlug,
   isUniqueViolation,
   generateRandomSlug,
-} from "./shortUrl.utils";
+} from "./shortUrls.utils";
 
 export async function resolveShortUrl(
   code: string,
