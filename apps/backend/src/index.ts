@@ -7,7 +7,10 @@ import { typeDefs } from "./graphql/schema";
 import { resolvers } from "./graphql/resolvers";
 import { redirectRouter } from "./http/routes/redirect.route";
 import { buildContext } from "./graphql/context";
-import { createShortUrlRateLimit } from "./security/rateLimit.middleware";
+import {
+  authRateLimit,
+  createShortUrlRateLimit,
+} from "./security/rateLimit.middleware";
 import { securityHeadersMiddleware } from "./security/headers";
 import { getRateLimitMetricsSnapshot } from "./security/rateLimit";
 
@@ -21,6 +24,7 @@ app.use(
   cors({ origin: env.FRONTEND_ORIGIN, credentials: true }),
   express.json(),
   express.json({ limit: env.JSON_BODY_LIMIT }),
+  authRateLimit,
   createShortUrlRateLimit,
 );
 

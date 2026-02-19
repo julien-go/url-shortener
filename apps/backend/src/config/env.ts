@@ -28,6 +28,9 @@ export const env = {
   RL_REDIRECT_MAX: envNumber("RL_REDIRECT_MAX", 60),
   RL_CREATE_WINDOW_MS: envNumber("RL_CREATE_WINDOW_MS", 60_000),
   RL_CREATE_MAX: envNumber("RL_CREATE_MAX", 10),
+  RL_AUTH_WINDOW_MS: envNumber("RL_AUTH_WINDOW_MS", 60_000),
+  RL_AUTH_MAX: envNumber("RL_AUTH_MAX", 5),
+  RL_AUTH_BLOCK_BASE_SECONDS: envNumber("RL_AUTH_BLOCK_BASE_SECONDS", 30),
   NODE_ENV: process.env.NODE_ENV ?? "development",
   COOKIE_NAME: process.env.COOKIE_NAME ?? "auth_token",
   COOKIE_SAMESITE: (process.env.COOKIE_SAMESITE ?? "Lax") as
