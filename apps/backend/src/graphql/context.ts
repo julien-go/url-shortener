@@ -17,9 +17,7 @@ export async function buildContext(
   req: Request,
   res: Response,
 ): Promise<GraphQLContext> {
-  const token =
-    extractBearerToken(req.headers.authorization) ??
-    extractCookieToken(req.headers.cookie);
+  const token = extractCookieToken(req.headers.cookie);
 
   if (!token) return { user: null, res };
 
