@@ -5,6 +5,7 @@ import {
   createUser,
   findUserByEmail,
   findUserById,
+  incrementUserTokenVersion,
 } from "../modules/users/users.repo";
 import {
   hashPassword,
@@ -242,7 +243,11 @@ export const resolvers = {
       try {
         const passwordHash = await hashPassword(password);
         const user = await createUser(email, passwordHash);
-        const token = signToken({ sub: user.id, email: user.email });
+        const token = signToken({
+          sub: user.id,
+          email: user.email,
+          tokenVersion: user.token_version,
+        });
         setAuthCookie(ctx.res, token);
 
         return {
@@ -296,7 +301,11 @@ export const resolvers = {
         });
       }
 
-      const token = signToken({ sub: user.id, email: user.email });
+      const token = signToken({
+        sub: user.id,
+        email: user.email,
+        tokenVersion: user.token_version,
+      });
       setAuthCookie(ctx.res, token);
 
       return {
@@ -309,6 +318,9 @@ export const resolvers = {
     },
 
     logout: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      if (ctx.user) {
+        await incrementUserTokenVersion(ctx.user.id);
+      }
       clearAuthCookie(ctx.res);
       return true;
     },
