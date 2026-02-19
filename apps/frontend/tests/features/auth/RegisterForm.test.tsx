@@ -1,63 +1,59 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RegisterForm } from "../../../src/features/auth/components/RegisterForm";
-import * as authModule from "../../../src/app/providers/useAuth";
-import * as registerHookModule from "../../../src/features/auth/hooks/useRegister";
+import { AuthContext } from "../../../src/app/providers/authContext";
 
-const mockNavigate = vi.fn();
-
-vi.mock("react-router-dom", async () => {
-  const actual =
-    await vi.importActual<typeof import("react-router-dom")>(
-      "react-router-dom",
-    );
-
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
-
-type MinimalRegisterMutation = Pick<
-  ReturnType<typeof registerHookModule.useRegister>,
-  "mutateAsync" | "isPending" | "isError" | "error"
->;
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+}
 
 describe("RegisterForm", () => {
   beforeEach(() => {
-    mockNavigate.mockReset();
     vi.restoreAllMocks();
   });
 
   it("submits credentials, stores token and navigates", async () => {
     const setSession = vi.fn();
-    const mutateAsync = vi
-      .fn()
-      .mockResolvedValue({ register: { token: "jwt-register-token" } });
 
-    vi.spyOn(authModule, "useAuth").mockReturnValue({
-      token: null,
-      setSession,
-      logout: vi.fn(),
-    });
-
-    const registerMock: MinimalRegisterMutation = {
-      mutateAsync,
-      isPending: false,
-      isError: false,
-      error: null,
-    };
-
-    vi.spyOn(registerHookModule, "useRegister").mockReturnValue(
-      registerMock as ReturnType<typeof registerHookModule.useRegister>,
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            register: {
+              token: "jwt-register-token",
+              user: {
+                id: "u1",
+                email: "test@example.com",
+                createdAt: new Date().toISOString(),
+              },
+            },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
     );
 
     render(
-      <MemoryRouter>
-        <RegisterForm />
+      <MemoryRouter initialEntries={["/register"]}>
+        <QueryClientProvider client={createQueryClient()}>
+          <AuthContext.Provider
+            value={{ token: null, setSession, logout: vi.fn() }}
+          >
+            <Routes>
+              <Route path="/register" element={<RegisterForm />} />
+              <Route path="/" element={<div>Home page</div>} />
+            </Routes>
+          </AuthContext.Provider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
 
@@ -72,40 +68,56 @@ describe("RegisterForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() => {
-      expect(mutateAsync).toHaveBeenCalledWith({
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const request = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+      const body = JSON.parse(String(request.body)) as {
+        variables: { input: { email: string; password: string } };
+      };
+
+      expect(body.variables.input).toEqual({
         email: "test@example.com",
         password: "secretPassword",
       });
     });
 
-    expect(setSession).toHaveBeenCalledWith("jwt-register-token");
-    expect(mockNavigate).toHaveBeenCalledWith("/");
+    await waitFor(() => {
+      expect(setSession).toHaveBeenCalledWith("jwt-register-token");
+      expect(screen.getByText("Home page")).toBeInTheDocument();
+    });
   });
 
-  it("shows a mutation error message", () => {
-    vi.spyOn(authModule, "useAuth").mockReturnValue({
-      token: null,
-      setSession: vi.fn(),
-      logout: vi.fn(),
-    });
-
-    const registerMock: MinimalRegisterMutation = {
-      mutateAsync: vi.fn(),
-      isPending: false,
-      isError: true,
-      error: new Error("Email already used"),
-    };
-
-    vi.spyOn(registerHookModule, "useRegister").mockReturnValue(
-      registerMock as ReturnType<typeof registerHookModule.useRegister>,
+  it("shows a mutation error message", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          errors: [{ message: "Email already used" }],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
     );
 
     render(
-      <MemoryRouter>
-        <RegisterForm />
+      <MemoryRouter initialEntries={["/register"]}>
+        <QueryClientProvider client={createQueryClient()}>
+          <AuthContext.Provider
+            value={{ token: null, setSession: vi.fn(), logout: vi.fn() }}
+          >
+            <Routes>
+              <Route path="/register" element={<RegisterForm />} />
+            </Routes>
+          </AuthContext.Provider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Email already used")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "secretPassword" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByText("Email already used")).toBeInTheDocument();
   });
 });
