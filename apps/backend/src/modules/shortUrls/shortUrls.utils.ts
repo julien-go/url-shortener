@@ -24,8 +24,16 @@ export function isValidHttpUrl(url: string): boolean {
   }
 }
 
+function normalizeHostname(hostname: string): string {
+  const h = hostname.trim().toLowerCase();
+
+  if (h.startsWith("[") && h.endsWith("]")) return h.slice(1, -1);
+
+  return h;
+}
+
 function isPrivateOrSensitiveHost(hostname: string): boolean {
-  const normalized = hostname.trim().toLowerCase();
+  const normalized = normalizeHostname(hostname);
 
   if (BLOCKED_HOSTNAMES.has(normalized) || normalized.endsWith(".localhost")) {
     return true;
