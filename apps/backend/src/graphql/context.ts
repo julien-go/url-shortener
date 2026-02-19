@@ -8,16 +8,6 @@ export type GraphQLContext = {
   res: Response;
 };
 
-function extractBearerToken(authHeader: unknown): string | null {
-  if (typeof authHeader !== "string") return null;
-
-  const trimmed = authHeader.trim();
-  if (!trimmed.toLowerCase().startsWith("bearer ")) return null;
-
-  const token = trimmed.slice("bearer ".length).trim();
-  return token.length ? token : null;
-}
-
 function extractCookieToken(cookieHeader: unknown): string | null {
   if (typeof cookieHeader !== "string") return null;
   return extractCookieValue(cookieHeader, env.COOKIE_NAME);
