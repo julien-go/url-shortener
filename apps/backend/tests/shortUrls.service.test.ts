@@ -7,19 +7,11 @@ const repoMocks = vi.hoisted(() => ({
 }));
 vi.mock("../src/modules/shortUrls/shortUrls.repo", () => repoMocks);
 
-const utilsMocks = vi.hoisted(() => ({
-  generateRandomSlug: vi.fn(),
-  isUniqueViolation: vi.fn(),
-  isValidHttpUrl: vi.fn(),
-  isValidSlug: vi.fn(),
-}));
-
-vi.mock("../src/modules/shortUrls/shortUrl.utils", () => utilsMocks);
-
 import {
   createShortUrl,
   resolveShortUrl,
 } from "../src/modules/shortUrls/shortUrls.service";
+import * as shortUrlsUtils from "../src/modules/shortUrls/shortUrls.utils";
 
 describe("shortUrls.service", () => {
   beforeEach(() => {
@@ -29,8 +21,6 @@ describe("shortUrls.service", () => {
 
   describe("createShortUrl", () => {
     it("returns INVALID_URL when original url is invalid", async () => {
-      utilsMocks.isValidHttpUrl.mockReturnValue(false);
-
       const result = await createShortUrl({ originalUrl: "bad url" }, "userid");
 
       expect(result).toEqual({ ok: false, reason: "INVALID_URL" });
@@ -38,9 +28,6 @@ describe("shortUrls.service", () => {
     });
 
     it("returns INVALID_CODE for invalid custom code", async () => {
-      utilsMocks.isValidHttpUrl.mockReturnValue(true);
-      utilsMocks.isValidSlug.mockReturnValue(false);
-
       const result = await createShortUrl(
         { originalUrl: "https://example.com", code: "bad slug" },
         "userid",
@@ -51,9 +38,6 @@ describe("shortUrls.service", () => {
     });
 
     it("returns SLUG_TAKEN when custom code already exists", async () => {
-      utilsMocks.isValidHttpUrl.mockReturnValue(true);
-      utilsMocks.isValidSlug.mockReturnValue(true);
-      utilsMocks.isUniqueViolation.mockReturnValue(true);
       repoMocks.createShortUrlRow.mockRejectedValue({ code: "23505" });
 
       const result = await createShortUrl(
@@ -65,11 +49,9 @@ describe("shortUrls.service", () => {
     });
 
     it("retries on slug collision for generated code", async () => {
-      utilsMocks.isValidHttpUrl.mockReturnValue(true);
-      utilsMocks.generateRandomSlug
+      vi.spyOn(shortUrlsUtils, "generateRandomSlug")
         .mockReturnValueOnce("taken-slug1")
         .mockReturnValueOnce("new-slug2");
-      utilsMocks.isUniqueViolation.mockReturnValue(true);
 
       repoMocks.createShortUrlRow
         .mockRejectedValueOnce({ code: "23505" })
@@ -96,6 +78,20 @@ describe("shortUrls.service", () => {
       const result = await resolveShortUrl("missing");
 
       expect(result).toEqual({ ok: false, reason: "NOT_FOUND" });
+    });
+
+    it("returns DELETED when link was deleted", async () => {
+      repoMocks.findByCode.mockResolvedValue({
+        id: "id-1",
+        target_url: "https://example.com",
+        deleted_at: new Date().toISOString(),
+        is_active: true,
+      });
+
+      const result = await resolveShortUrl("deleted");
+
+      expect(result).toEqual({ ok: false, reason: "DELETED" });
+      expect(repoMocks.trackClick).not.toHaveBeenCalled();
     });
 
     it("returns INACTIVE when link is disabled", async () => {

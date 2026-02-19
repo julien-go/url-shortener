@@ -1,35 +1,52 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { CreateShortUrlForm } from "../../../src/features/links/components/CreateShortUrlForm";
-import * as hookModule from "../../../src/features/links/hooks/useCreateShortUrl";
 
-type MinimalMutation = Pick<
-  ReturnType<typeof hookModule.useCreateShortUrl>,
-  "mutate" | "isPending" | "error" | "data"
->;
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+}
+
+function renderForm() {
+  return render(
+    <QueryClientProvider client={createQueryClient()}>
+      <CreateShortUrlForm />
+    </QueryClientProvider>,
+  );
+}
 
 describe("CreateShortUrlForm", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
-
-  it("submit: trims slug", () => {
-    const mutate = vi.fn();
-
-    const mockReturn: MinimalMutation = {
-      mutate,
-      isPending: false,
-      error: null,
-      data: undefined,
-    };
-
-    vi.spyOn(hookModule, "useCreateShortUrl").mockReturnValue(
-      mockReturn as ReturnType<typeof hookModule.useCreateShortUrl>,
+  it("submit: trims slug", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            createShortUrl: {
+              shortLink: "https://short.test/promo-2026",
+              shortUrl: {
+                id: "1",
+                code: "promo-2026",
+                originalUrl: "https://example.com",
+                createdAt: new Date().toISOString(),
+              },
+            },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
     );
 
-    render(<CreateShortUrlForm />);
+    renderForm();
 
     fireEvent.change(screen.getByLabelText("Original URL"), {
       target: { value: "https://example.com" },
@@ -41,27 +58,41 @@ describe("CreateShortUrlForm", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Create link" }));
 
-    expect(mutate).toHaveBeenCalledWith({
-      originalUrl: "https://example.com",
-      code: "promo-2026",
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const request = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+      const body = JSON.parse(String(request.body)) as {
+        variables: { input: { originalUrl: string; code?: string } };
+      };
+
+      expect(body.variables.input).toEqual({
+        originalUrl: "https://example.com",
+        code: "promo-2026",
+      });
     });
   });
 
-  it("submit: whitespace slug => undefined", () => {
-    const mutate = vi.fn();
-
-    const mockReturn: MinimalMutation = {
-      mutate,
-      isPending: false,
-      error: null,
-      data: undefined,
-    };
-
-    vi.spyOn(hookModule, "useCreateShortUrl").mockReturnValue(
-      mockReturn as ReturnType<typeof hookModule.useCreateShortUrl>,
+  it("submit: whitespace slug => undefined", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            createShortUrl: {
+              shortLink: "https://short.test/abc",
+              shortUrl: {
+                id: "1",
+                code: "abc",
+                originalUrl: "https://example.com",
+                createdAt: new Date().toISOString(),
+              },
+            },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
     );
 
-    render(<CreateShortUrlForm />);
+    renderForm();
 
     fireEvent.change(screen.getByLabelText("Original URL"), {
       target: { value: "https://example.com" },
@@ -73,28 +104,65 @@ describe("CreateShortUrlForm", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Create link" }));
 
-    expect(mutate).toHaveBeenCalledWith({
-      originalUrl: "https://example.com",
-      code: undefined,
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const request = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+      const body = JSON.parse(String(request.body)) as {
+        variables: { input: { originalUrl: string; code?: string } };
+      };
+
+      expect(body.variables.input).toEqual({
+        originalUrl: "https://example.com",
+      });
+      expect(body.variables.input.code).toBeUndefined();
     });
   });
 
-  it('pending: button disabled and shows "Creating…"', () => {
-    const mockReturn: MinimalMutation = {
-      mutate: vi.fn(),
-      isPending: true,
-      error: null,
-      data: undefined,
-    };
-
-    vi.spyOn(hookModule, "useCreateShortUrl").mockReturnValue(
-      mockReturn as ReturnType<typeof hookModule.useCreateShortUrl>,
+  it('pending: button disabled and shows "Creating…"', async () => {
+    let resolveFetch: ((value: Response) => void) | undefined;
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
     );
 
-    render(<CreateShortUrlForm />);
+    renderForm();
+    fireEvent.change(screen.getByLabelText("Original URL"), {
+      target: { value: "https://example.com" },
+    });
 
-    const btn = screen.getByRole("button", { name: "Creating…" });
+    fireEvent.click(screen.getByRole("button", { name: "Create link" }));
+
+    const btn = await screen.findByRole("button", { name: "Creating…" });
     expect(btn).toBeDisabled();
+
+    if (!resolveFetch) {
+      throw new Error("fetch resolver was not initialized");
+    }
+
+    resolveFetch(
+      new Response(
+        JSON.stringify({
+          data: {
+            createShortUrl: {
+              shortLink: "https://short.test/abc",
+              shortUrl: {
+                id: "1",
+                code: "abc",
+                originalUrl: "https://example.com",
+                createdAt: new Date().toISOString(),
+              },
+            },
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Create link" })).toBeEnabled();
+    });
   });
 
   it("copy: calls clipboard and shows success message", async () => {
@@ -105,28 +173,35 @@ describe("CreateShortUrlForm", () => {
       value: { writeText },
     });
 
-    const mockReturn: MinimalMutation = {
-      mutate: vi.fn(),
-      isPending: false,
-      error: null,
-      data: {
-        createShortUrl: {
-          shortLink: "https://short.test/abc",
-          shortUrl: {
-            id: "1",
-            code: "abc",
-            originalUrl: "https://example.com",
-            createdAt: new Date().toISOString(),
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            createShortUrl: {
+              shortLink: "https://short.test/abc",
+              shortUrl: {
+                id: "1",
+                code: "abc",
+                originalUrl: "https://example.com",
+                createdAt: new Date().toISOString(),
+              },
+            },
           },
-        },
-      },
-    };
-
-    vi.spyOn(hookModule, "useCreateShortUrl").mockReturnValue(
-      mockReturn as ReturnType<typeof hookModule.useCreateShortUrl>,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
     );
 
-    render(<CreateShortUrlForm />);
+    renderForm();
+
+    fireEvent.change(screen.getByLabelText("Original URL"), {
+      target: { value: "https://example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create link" }));
+
+    expect(
+      await screen.findByText("https://short.test/abc"),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
 
