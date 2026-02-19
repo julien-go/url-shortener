@@ -9,7 +9,7 @@ import { Label } from "../../../components/ui/label";
 
 export function LoginForm() {
   const navigate = useNavigate();
-  const { setSession } = useAuth();
+  const { refreshSession } = useAuth();
   const loginMutation = useLogin();
 
   const [email, setEmail] = React.useState("");
@@ -19,8 +19,8 @@ export function LoginForm() {
     event.preventDefault();
 
     try {
-      const data = await loginMutation.mutateAsync({ email, password });
-      setSession(data.login.token);
+      await loginMutation.mutateAsync({ email, password });
+      await refreshSession();
       navigate("/");
     } catch {
       // React Query will surface the error state.

@@ -1,4 +1,31 @@
 import type { RequestHandler } from "express";
+import { env } from "../config/env";
+
+function buildCspValue() {
+  if (env.NODE_ENV === "development") {
+    return [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      `connect-src 'self' ${env.FRONTEND_ORIGIN ?? "http://localhost:5173"}`,
+      "img-src 'self' data:",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "base-uri 'none'",
+    ].join("; ");
+  }
+
+  return [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self'",
+    "img-src 'self' data:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "base-uri 'none'",
+  ].join("; ");
+}
 
 export const securityHeadersMiddleware: RequestHandler = (_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -9,5 +36,10 @@ export const securityHeadersMiddleware: RequestHandler = (_req, res, next) => {
     "Strict-Transport-Security",
     "max-age=31536000; includeSubDomains",
   );
+
+  if (env.ENABLE_CSP) {
+    res.setHeader("Content-Security-Policy", buildCspValue());
+  }
+
   next();
 };

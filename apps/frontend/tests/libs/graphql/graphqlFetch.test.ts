@@ -1,20 +1,16 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   graphqlFetch,
-  setGraphqlAuthTokenGetter,
   setGraphqlOnUnauthenticated,
 } from "../../../src/lib/graphql/graphqlFetch";
 
 describe("graphqlFetch", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    setGraphqlAuthTokenGetter(() => null);
     setGraphqlOnUnauthenticated(() => undefined);
   });
 
-  it("includes auth header when token getter returns a token", async () => {
-    setGraphqlAuthTokenGetter(() => "jwt-token");
-
+  it("always sends credentials include", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ data: { ok: true } }), {
         status: 200,
@@ -27,9 +23,7 @@ describe("graphqlFetch", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy.mock.calls[0]?.[1]).toEqual(
       expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer jwt-token",
-        }),
+        credentials: "include",
       }),
     );
   });

@@ -13,6 +13,7 @@ export const typeDefs = `#graphql
   register(input: RegisterInput!): AuthPayload!
   login(input: LoginInput!): AuthPayload!
   deleteLink(id: ID!): Boolean!
+  logout: Boolean!
   }
 
   input CreateShortUrlInput {
@@ -52,7 +53,6 @@ input LoginInput {
 }
 
 type AuthPayload {
-  token: String!
   user: User!
 }
 

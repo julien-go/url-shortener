@@ -1,11 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL as string;
 
-let getAuthToken: (() => string | null) | null = null;
-
-export function setGraphqlAuthTokenGetter(fn: () => string | null) {
-  getAuthToken = fn;
-}
-
 let onUnauthenticated: (() => void) | null = null;
 
 export function setGraphqlOnUnauthenticated(fn: () => void) {
@@ -35,13 +29,11 @@ export async function graphqlFetch<
   TData,
   TVars extends Record<string, unknown> = Record<string, never>,
 >(query: string, variables?: TVars): Promise<TData> {
-  const token = getAuthToken?.() ?? null;
-
   const res = await fetch(API_URL, {
     method: "POST",
+    credentials: "include",
     headers: {
       "content-type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({ query, variables }),
   });

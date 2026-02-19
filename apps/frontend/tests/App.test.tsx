@@ -4,10 +4,18 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import App from "../src/app/App";
-import {
-  AuthContext,
-  type AuthContextValue,
-} from "../src/app/providers/authContext";
+import { AuthContext } from "../src/app/providers/authContext";
+
+vi.mock("../src/features/auth/hooks/useMe", () => ({
+  useMe: () => ({
+    data: {
+      id: "u1",
+      email: "test@example.com",
+      createdAt: new Date().toISOString(),
+    },
+    isLoading: false,
+  }),
+}));
 
 vi.mock("../src/features/links/hooks/useMyLinks", () => ({
   useMyLinks: () => ({
@@ -25,7 +33,7 @@ vi.mock("../src/features/links/hooks/useMyLinks", () => ({
   }),
 }));
 
-function renderApp(initialEntry: string, authValue: AuthContextValue) {
+function renderApp(initialEntry: string) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -36,7 +44,9 @@ function renderApp(initialEntry: string, authValue: AuthContextValue) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <QueryClientProvider client={queryClient}>
-        <AuthContext.Provider value={authValue}>
+        <AuthContext.Provider
+          value={{ refreshSession: vi.fn(), logout: vi.fn() }}
+        >
           <App />
         </AuthContext.Provider>
       </QueryClientProvider>
@@ -50,11 +60,7 @@ describe("App protected routes", () => {
   });
 
   it("renders /links page when authenticated", async () => {
-    renderApp("/links", {
-      token: "token",
-      setSession: vi.fn(),
-      logout: vi.fn(),
-    });
+    renderApp("/links");
 
     expect(await screen.findByText("No links yet.")).toBeInTheDocument();
   });
