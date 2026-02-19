@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { resolveShortUrl } from "../../modules/shortUrls/shortUrls.service";
+import { redirectRateLimit } from "../../security/rateLimit.middleware";
 
 export const redirectRouter = Router();
 
-redirectRouter.get("/:code", async (req, res) => {
+redirectRouter.get("/:code", redirectRateLimit, async (req, res) => {
   const secPurpose = String(req.headers["sec-purpose"] ?? "").toLowerCase();
   const purpose = String(req.headers["purpose"] ?? "").toLowerCase();
 
@@ -12,7 +13,11 @@ redirectRouter.get("/:code", async (req, res) => {
     secPurpose.includes("prefetch") ||
     secPurpose.includes("prerender");
 
-  const result = await resolveShortUrl(req.params.code, {
+  const code = Array.isArray(req.params.code)
+    ? req.params.code[0]
+    : req.params.code;
+
+  const result = await resolveShortUrl(code ?? "", {
     track: !isSpeculative,
   });
 

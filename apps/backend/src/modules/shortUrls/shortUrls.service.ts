@@ -1,10 +1,6 @@
 import { findByCode, trackClick } from "./shortUrls.repo";
 import { ResolveShortUrlResult } from "./shortUrls.types";
-import {
-  AUTO_SLUG_LENGTH,
-  MAX_SLUG_RETRIES,
-  SLUG_MAX_LENGTH,
-} from "./shortUrls.constants";
+import { AUTO_SLUG_LENGTH, MAX_SLUG_RETRIES } from "./shortUrls.constants";
 import { CreateShortUrlInput, CreateShortUrlResult } from "./shortUrls.types";
 import { createShortUrlRow } from "./shortUrls.repo";
 import {
@@ -12,7 +8,7 @@ import {
   isValidSlug,
   isUniqueViolation,
   generateRandomSlug,
-} from "./shortUrl.utils";
+} from "./shortUrls.utils";
 
 export async function resolveShortUrl(
   code: string,

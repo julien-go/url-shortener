@@ -9,7 +9,7 @@ import { Label } from "../../../components/ui/label";
 
 export function RegisterForm() {
   const navigate = useNavigate();
-  const { setSession } = useAuth();
+  const { refreshSession } = useAuth();
   const registerMutation = useRegister();
 
   const [email, setEmail] = React.useState("");
@@ -19,8 +19,8 @@ export function RegisterForm() {
     event.preventDefault();
 
     try {
-      const data = await registerMutation.mutateAsync({ email, password });
-      setSession(data.register.token);
+      await registerMutation.mutateAsync({ email, password });
+      await refreshSession();
       navigate("/");
     } catch {
       // React Query will surface the error state.
