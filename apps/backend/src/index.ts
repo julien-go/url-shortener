@@ -21,8 +21,15 @@ app.use(securityHeadersMiddleware);
 
 app.use(
   "/graphql",
-  cors({ origin: env.FRONTEND_ORIGIN, credentials: true }),
-  express.json(),
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (env.CORS_ALLOWED_ORIGINS.includes(origin))
+        return callback(null, true);
+      return callback(new Error("Origin not allowed by CORS"));
+    },
+    credentials: true,
+  }),
   express.json({ limit: env.JSON_BODY_LIMIT }),
   authRateLimit,
   createShortUrlRateLimit,
@@ -42,11 +49,21 @@ app.get("/healthz", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/metrics", (_req, res) => {
-  res.json({
-    rateLimit: getRateLimitMetricsSnapshot(),
+if (env.METRICS_ENABLED) {
+  app.get("/metrics", (req, res) => {
+    const hasValidApiKey =
+      !env.METRICS_API_KEY ||
+      req.header("x-metrics-api-key") === env.METRICS_API_KEY;
+
+    if (!hasValidApiKey) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    return res.json({
+      rateLimit: getRateLimitMetricsSnapshot(),
+    });
   });
-});
+}
 
 app.use("/", redirectRouter);
 

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { verifyToken } from "../modules/auth/auth.service";
 import { env } from "../config/env";
 import { extractCookieValue } from "../security/authCookies";
+import { findUserById } from "../modules/users/users.repo";
 
 export type GraphQLContext = {
   user: { id: string; email: string } | null;
@@ -23,6 +24,11 @@ export async function buildContext(
 
   const payload = verifyToken(token);
   if (!payload) return { user: null, res };
+
+  const user = await findUserById(payload.sub);
+  if (!user || user.token_version !== payload.tokenVersion) {
+    return { user: null, res };
+  }
 
   return { user: { id: payload.sub, email: payload.email }, res };
 }
