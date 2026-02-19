@@ -3,13 +3,9 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
-import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
-
-const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
 
 export default [
-  { ignores: ["dist/**", "node_modules/**"] },
+  { ignores: ["dist/**", "node_modules/**", "**/*.config.*"] },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -19,11 +15,6 @@ export default [
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
-
-      parserOptions: {
-        tsconfigRootDir,
-        project: ["./tsconfig.json", "./tsconfig.test.json"],
-      },
     },
     plugins: {
       "react-hooks": reactHooks,

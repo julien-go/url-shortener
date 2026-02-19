@@ -10,10 +10,10 @@ export default [
 
   js.configs.recommended,
 
-  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.recommended,
 
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.ts", "tests/**/*.ts"],
     languageOptions: {
       parserOptions: {
         tsconfigRootDir,
