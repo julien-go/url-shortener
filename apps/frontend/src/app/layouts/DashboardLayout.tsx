@@ -23,10 +23,10 @@ export function DashboardLayout({
   children,
   maxWidth = "xl",
 }: DashboardLayoutProps) {
-  const { token, logout } = useAuth();
+  const { logout } = useAuth();
   const meQuery = useMe();
 
-  const isSignedIn = Boolean(token) && Boolean(meQuery.data);
+  const isSignedIn = Boolean(meQuery.data);
 
   return (
     <div className="min-h-screen w-full bg-muted/40 px-4 py-10">
@@ -89,7 +89,7 @@ export function DashboardLayout({
                 </Badge>
                 <Button
                   variant="outline"
-                  onClick={logout}
+                  onClick={() => void logout()}
                   className="cursor-pointer"
                 >
                   Sign out

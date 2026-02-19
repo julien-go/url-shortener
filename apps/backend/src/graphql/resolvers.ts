@@ -28,6 +28,7 @@ import {
   linkStatsArgsSchema,
   myLinksArgsSchema,
 } from "./resolvers.schema";
+import { clearAuthCookie, setAuthCookie } from "../security/authCookies";
 
 export const resolvers = {
   ShortUrl: {
@@ -216,6 +217,7 @@ export const resolvers = {
     register: async (
       _: unknown,
       { input }: { input: { email: string; password: string } },
+      ctx: GraphQLContext,
     ) => {
       const parsed = registerInputSchema.safeParse(input);
       if (!parsed.success) {
@@ -241,9 +243,9 @@ export const resolvers = {
         const passwordHash = await hashPassword(password);
         const user = await createUser(email, passwordHash);
         const token = signToken({ sub: user.id, email: user.email });
+        setAuthCookie(ctx.res, token);
 
         return {
-          token,
           user: {
             id: user.id,
             email: user.email,
@@ -266,6 +268,7 @@ export const resolvers = {
     login: async (
       _: unknown,
       { input }: { input: { email: string; password: string } },
+      ctx: GraphQLContext,
     ) => {
       const parsed = loginInputSchema.safeParse(input);
       if (!parsed.success) {
@@ -294,15 +297,20 @@ export const resolvers = {
       }
 
       const token = signToken({ sub: user.id, email: user.email });
+      setAuthCookie(ctx.res, token);
 
       return {
-        token,
         user: {
           id: user.id,
           email: user.email,
           createdAt: user.created_at,
         },
       };
+    },
+
+    logout: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      clearAuthCookie(ctx.res);
+      return true;
     },
 
     deleteLink: async (

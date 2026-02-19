@@ -22,15 +22,14 @@ describe("LoginForm", () => {
     vi.restoreAllMocks();
   });
 
-  it("submits credentials, stores token and navigates", async () => {
-    const setSession = vi.fn();
+  it("submits credentials, refreshes session and navigates", async () => {
+    const refreshSession = vi.fn().mockResolvedValue(undefined);
 
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
           data: {
             login: {
-              token: "jwt-token",
               user: {
                 id: "u1",
                 email: "test@example.com",
@@ -46,9 +45,7 @@ describe("LoginForm", () => {
     render(
       <MemoryRouter initialEntries={["/login"]}>
         <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider
-            value={{ token: null, setSession, logout: vi.fn() }}
-          >
+          <AuthContext.Provider value={{ refreshSession, logout: vi.fn() }}>
             <Routes>
               <Route path="/login" element={<LoginForm />} />
               <Route path="/" element={<div>Home page</div>} />
@@ -82,7 +79,7 @@ describe("LoginForm", () => {
     });
 
     await waitFor(() => {
-      expect(setSession).toHaveBeenCalledWith("jwt-token");
+      expect(refreshSession).toHaveBeenCalledTimes(1);
       expect(screen.getByText("Home page")).toBeInTheDocument();
     });
   });
@@ -106,7 +103,7 @@ describe("LoginForm", () => {
       <MemoryRouter initialEntries={["/login"]}>
         <QueryClientProvider client={createQueryClient()}>
           <AuthContext.Provider
-            value={{ token: null, setSession: vi.fn(), logout: vi.fn() }}
+            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
           >
             <Routes>
               <Route path="/login" element={<LoginForm />} />

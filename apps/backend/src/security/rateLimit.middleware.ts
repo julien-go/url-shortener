@@ -2,6 +2,7 @@ import type { Request } from "express";
 import { verifyToken } from "../modules/auth/auth.service";
 import { env } from "../config/env";
 import { createFixedWindowRateLimit } from "./rateLimit";
+import { extractCookieValue } from "./authCookies";
 
 function getClientIp(req: Request): string {
   return req.ip || req.socket.remoteAddress || "unknown";
@@ -18,7 +19,13 @@ function extractBearerToken(authHeader: unknown): string | null {
 }
 
 function createShortUrlIdentity(req: Request): string {
-  const token = extractBearerToken(req.headers.authorization);
+  const bearerToken = extractBearerToken(req.headers.authorization);
+  const cookieToken =
+    typeof req.headers.cookie === "string"
+      ? extractCookieValue(req.headers.cookie, env.COOKIE_NAME)
+      : null;
+
+  const token = bearerToken ?? cookieToken;
   if (token) {
     const payload = verifyToken(token);
     if (payload?.sub) {

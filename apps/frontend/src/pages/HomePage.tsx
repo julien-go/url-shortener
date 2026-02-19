@@ -1,5 +1,4 @@
 import { DashboardLayout } from "../app/layouts/DashboardLayout";
-import { useAuth } from "../app/providers/useAuth";
 import { useMe } from "../features/auth/hooks/useMe";
 import { CreateShortUrlForm } from "../features/links/components/CreateShortUrlForm";
 
@@ -11,9 +10,8 @@ import {
 } from "../components/ui/card";
 
 export function HomePage() {
-  const { token } = useAuth();
   const meQuery = useMe();
-  const isSignedIn = Boolean(token) && Boolean(meQuery.data);
+  const isSignedIn = Boolean(meQuery.data);
 
   return (
     <DashboardLayout maxWidth="lg">
