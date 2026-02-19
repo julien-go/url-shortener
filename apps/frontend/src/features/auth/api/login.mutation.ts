@@ -4,7 +4,6 @@ import type { AuthPayload } from "./types";
 const LOGIN = `
 mutation Login($input: LoginInput!) {
   login(input: $input) {
-    token
     user { id email createdAt }
   }
 }

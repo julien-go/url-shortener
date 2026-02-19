@@ -5,6 +5,5 @@ export type AuthUser = {
 };
 
 export type AuthPayload = {
-  token: string;
   user: AuthUser;
 };

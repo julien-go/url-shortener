@@ -1,26 +1,34 @@
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import { verifyToken } from "../modules/auth/auth.service";
+import { env } from "../config/env";
+import { extractCookieValue } from "../security/authCookies";
+import { findUserById } from "../modules/users/users.repo";
 
 export type GraphQLContext = {
   user: { id: string; email: string } | null;
+  res: Response;
 };
 
-function extractBearerToken(authHeader: unknown): string | null {
-  if (typeof authHeader !== "string") return null;
-
-  const trimmed = authHeader.trim();
-  if (!trimmed.toLowerCase().startsWith("bearer ")) return null;
-
-  const token = trimmed.slice("bearer ".length).trim();
-  return token.length ? token : null;
+function extractCookieToken(cookieHeader: unknown): string | null {
+  if (typeof cookieHeader !== "string") return null;
+  return extractCookieValue(cookieHeader, env.COOKIE_NAME);
 }
 
-export async function buildContext(req: Request): Promise<GraphQLContext> {
-  const token = extractBearerToken(req.headers.authorization);
-  if (!token) return { user: null };
+export async function buildContext(
+  req: Request,
+  res: Response,
+): Promise<GraphQLContext> {
+  const token = extractCookieToken(req.headers.cookie);
+
+  if (!token) return { user: null, res };
 
   const payload = verifyToken(token);
-  if (!payload) return { user: null };
+  if (!payload) return { user: null, res };
 
-  return { user: { id: payload.sub, email: payload.email } };
+  const user = await findUserById(payload.sub);
+  if (!user || user.token_version !== payload.tokenVersion) {
+    return { user: null, res };
+  }
+
+  return { user: { id: payload.sub, email: payload.email }, res };
 }

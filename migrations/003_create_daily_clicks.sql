@@ -1,3 +1,4 @@
+-- migrate:up
 CREATE TABLE IF NOT EXISTS daily_clicks (
   short_url_id uuid NOT NULL REFERENCES short_urls(id) ON DELETE CASCADE,
   day_utc      date NOT NULL,
@@ -8,3 +9,7 @@ CREATE TABLE IF NOT EXISTS daily_clicks (
 
 CREATE INDEX IF NOT EXISTS daily_clicks_day_utc_idx
 ON daily_clicks (day_utc);
+
+-- migrate:down
+DROP INDEX IF EXISTS public.daily_clicks_day_utc_idx;
+DROP TABLE IF EXISTS public.daily_clicks;

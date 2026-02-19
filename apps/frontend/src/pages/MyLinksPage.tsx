@@ -1,7 +1,5 @@
 import * as React from "react";
-import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../app/providers/useAuth";
 import { getGraphQLRequestErrorMessage } from "../features/links/hooks/errors";
 import { DashboardLayout } from "../app/layouts/DashboardLayout";
 import { useMyLinks } from "../features/links/hooks/useMyLinks";
@@ -28,7 +26,6 @@ const PAGE_SIZE = 10;
 export function MyLinksPage() {
   const navigate = useNavigate();
 
-  const { token } = useAuth();
   const [cursorStack, setCursorStack] = React.useState<(string | null)[]>([
     null,
   ]);
@@ -37,7 +34,7 @@ export function MyLinksPage() {
   const [copyMessage, setCopyMessage] = React.useState<string | null>(null);
   const currentCursor = cursorStack[cursorStack.length - 1];
 
-  const myLinksQuery = useMyLinks(PAGE_SIZE, currentCursor, !!token);
+  const myLinksQuery = useMyLinks(PAGE_SIZE, currentCursor, true);
   const deleteLinkMutation = useDeleteLink();
 
   const myLinksPage = myLinksQuery.data?.myLinks;
@@ -85,10 +82,6 @@ export function MyLinksPage() {
       onSettled: () => setDeletingId(null),
     });
   };
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
 
   const errorMessage = myLinksQuery.error
     ? getGraphQLRequestErrorMessage(myLinksQuery.error, "Failed to load links.")
