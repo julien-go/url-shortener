@@ -103,7 +103,6 @@ export function MyLinksPage() {
           <Button
             variant="secondary"
             onClick={() => myLinksQuery.refetch()}
-            className="cursor-pointer"
             disabled={myLinksQuery.isFetching}
           >
             Refresh
@@ -172,7 +171,6 @@ export function MyLinksPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="cursor-pointer"
                             onClick={() => copyToClipboard(link.shortLink)}
                           >
                             Copy
@@ -189,7 +187,6 @@ export function MyLinksPage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="cursor-pointer"
                             onClick={() => navigate(`/links/${link.id}/stats`)}
                           >
                             Statistics
@@ -222,7 +219,6 @@ export function MyLinksPage() {
                           variant="destructive"
                           size="sm"
                           onClick={() => confirmAndDeleteLink(link.id)}
-                          className="cursor-pointer"
                           disabled={
                             deleteLinkMutation.isPending &&
                             deletingId === link.id
