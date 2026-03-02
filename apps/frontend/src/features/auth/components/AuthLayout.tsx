@@ -14,7 +14,7 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen w-full bg-background px-4 py-12">
+    <div className=" w-full px-4 py-12">
       <div className="mx-auto w-full max-w-lg">
         <Card className="rounded-xl border-border/80">
           <CardHeader className="space-y-1">
