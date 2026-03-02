@@ -35,7 +35,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
+      <div className="flex flex-col space-y-2.5 gap-y-1 mb-8">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
@@ -47,7 +47,7 @@ export function LoginForm() {
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="flex flex-col space-y-2.5 gap-y-1 mb-8">
         <Label htmlFor="password">Password</Label>
         <Input
           id="password"
