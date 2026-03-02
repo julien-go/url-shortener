@@ -5,7 +5,7 @@ import { getCreateShortUrlErrorMessage } from "../hooks/errors";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
-import { Card } from "../../../components/ui/card";
+import { Separator } from "../../../components/ui/separator";
 
 export function CreateShortUrlForm() {
   const [originalUrl, setOriginalUrl] = React.useState("");
@@ -41,16 +41,19 @@ export function CreateShortUrlForm() {
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Create a short link</h2>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-8 sm:space-y-10">
+      <div className="space-y-2">
+        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-[2.25rem]">
+          Create a short link
+        </h1>
+        <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
           Paste a URL and optionally choose a custom slug.
         </p>
       </div>
+      <Separator className="my-8 bg-border/80" />
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
+      <form onSubmit={onSubmit} className="space-y-5">
+        <div className="flex flex-col space-y-2.5 gap-y-1.5 mb-8">
           <Label htmlFor="originalUrl">Original URL</Label>
           <Input
             id="originalUrl"
@@ -62,7 +65,7 @@ export function CreateShortUrlForm() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2.5 gap-y-1.5">
           <Label htmlFor="code">Custom slug (optional)</Label>
           <Input
             id="code"
@@ -82,26 +85,30 @@ export function CreateShortUrlForm() {
         </Button>
 
         {errorMessage ? (
-          <p className="text-sm text-destructive">{errorMessage}</p>
+          <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {errorMessage}
+          </p>
         ) : null}
       </form>
 
       {created ? (
-        <Card className="rounded-xl p-4">
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Short link</div>
+        <div className="border-t border-border/80 pt-4 sm:pt-5">
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-muted-foreground">
+              Short link
+            </div>
 
             <a
               href={created.shortLink}
               target="_blank"
               rel="noreferrer"
-              className="block truncate font-mono text-sm underline underline-offset-4"
+              className="focus-premium block truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
               title={created.shortLink}
             >
               {created.shortLink}
             </a>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={copyCreatedLink}>
                 Copy
               </Button>
@@ -112,10 +119,12 @@ export function CreateShortUrlForm() {
               </Button>
             </div>
             {copyMessage ? (
-              <p className="text-sm text-muted-foreground">{copyMessage}</p>
+              <p className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90">
+                {copyMessage}
+              </p>
             ) : null}
           </div>
-        </Card>
+        </div>
       ) : null}
     </div>
   );
