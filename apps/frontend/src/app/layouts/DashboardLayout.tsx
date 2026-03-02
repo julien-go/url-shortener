@@ -29,9 +29,9 @@ export function DashboardLayout({
   const isSignedIn = Boolean(meQuery.data);
 
   return (
-    <div className="min-h-screen w-full bg-muted/40 px-4 py-10">
+    <div className="min-h-screen w-full bg-background px-4 py-10">
       <div className={`mx-auto w-full ${getMaxWidthClass(maxWidth)} space-y-6`}>
-        <Card className="rounded-2xl">
+        <Card className="rounded-xl border-border/80">
           <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <Link to="/" className="text-lg font-semibold hover:opacity-80">
@@ -49,8 +49,8 @@ export function DashboardLayout({
                   end
                   className={({ isActive }) =>
                     isActive
-                      ? "rounded-md bg-muted px-3 py-1 text-foreground"
-                      : "rounded-md px-3 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "rounded-md bg-accent px-3 py-1 text-foreground"
+                      : "rounded-md px-3 py-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                   }
                 >
                   Home
@@ -60,8 +60,8 @@ export function DashboardLayout({
                   to="/links"
                   className={({ isActive }) =>
                     isActive
-                      ? "rounded-md bg-muted px-3 py-1 text-foreground"
-                      : "rounded-md px-3 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "rounded-md bg-accent px-3 py-1 text-foreground"
+                      : "rounded-md px-3 py-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                   }
                 >
                   My links
@@ -87,11 +87,7 @@ export function DashboardLayout({
                       ? meQuery.data.email
                       : "Signed in"}
                 </Badge>
-                <Button
-                  variant="outline"
-                  onClick={() => void logout()}
-                  className="cursor-pointer"
-                >
+                <Button variant="outline" onClick={() => void logout()}>
                   Sign out
                 </Button>
               </div>

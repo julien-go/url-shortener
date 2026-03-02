@@ -94,7 +94,10 @@ export function LinkStatsPage() {
             <h1 className="text-2xl font-semibold">Link statistics</h1>
 
             <p className="text-sm text-muted-foreground">
-              <Link to="/links" className="underline underline-offset-4">
+              <Link
+                to="/links"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
                 Back to my links
               </Link>
             </p>

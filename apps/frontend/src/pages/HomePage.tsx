@@ -15,7 +15,7 @@ export function HomePage() {
 
   return (
     <DashboardLayout maxWidth="lg">
-      <Card className="rounded-2xl">
+      <Card className="rounded-xl border-border/80">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Home</CardTitle>
           <p className="text-sm text-muted-foreground">
