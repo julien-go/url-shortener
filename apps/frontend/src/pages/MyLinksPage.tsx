@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Copy, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getGraphQLRequestErrorMessage } from "../features/links/hooks/errors";
 import { useMyLinks } from "../features/links/hooks/useMyLinks";
@@ -13,14 +14,9 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 
 import { Badge } from "../components/ui/badge";
+import { Separator } from "../components/ui/separator";
 
 const PAGE_SIZE = 10;
 
@@ -111,134 +107,167 @@ export function MyLinksPage() {
     : null;
 
   return (
-    <section className="space-y-5">
-      <Card>
-        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl">My links</CardTitle>
-            <p className="text-sm text-muted-foreground">
+    <section className="space-y-7">
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1.5">
+            <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-[2.15rem]">
+              My links
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
               Manage your short URLs from a single dashboard.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">Total links : {totalCount}</Badge>
-            <Badge variant="secondary">Page {currentPage}</Badge>
-            <Button
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Badge
               variant="secondary"
+              className="border-border/70 bg-background/65 px-3 py-1 text-xs font-medium"
+            >
+              Total links: {totalCount}
+            </Badge>
+
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => myLinksQuery.refetch()}
               disabled={myLinksQuery.isFetching}
             >
               Refresh
             </Button>
           </div>
-        </CardHeader>
+        </div>
+        <Separator className="bg-border/80" />
+      </div>
 
-        <CardContent className="space-y-4">
-          {myLinksQuery.isLoading ? (
-            <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
-              Loading your links…
-            </div>
-          ) : myLinksQuery.isError ? (
-            <div className="space-y-2 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-              <p>{errorMessage}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => myLinksQuery.refetch()}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : links.length === 0 ? (
-            <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-              {rawLinks.length === 0
-                ? "No links yet."
-                : "No result for the current search."}
-            </div>
-          ) : (
-            <div className="rounded-xl border bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40">
-                    <TableHead className="w-[320px]">Short link</TableHead>
-                    <TableHead>Original URL</TableHead>
-                    <TableHead className="w-27.5 text-right">Clicks</TableHead>
-                    <TableHead className="w-35">Created</TableHead>
-                    <TableHead className="w-55 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+      <div className="space-y-4 px-1 sm:px-0">
+        <div className="h-px bg-border/55" />
+        {myLinksQuery.isLoading ? (
+          <div className="rounded-lg border border-border/80 bg-muted/35 p-5 text-sm text-muted-foreground">
+            Loading your links…
+          </div>
+        ) : myLinksQuery.isError ? (
+          <div className="space-y-2 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+            <p>{errorMessage}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => myLinksQuery.refetch()}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : links.length === 0 ? (
+          <div className="rounded-lg border border-border/80 bg-muted/35 p-6 text-sm text-muted-foreground">
+            {rawLinks.length === 0
+              ? "No links yet."
+              : "No result for the current search."}
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-lg bg-background/35">
+            <Table className="border-y border-border/65">
+              <TableHeader>
+                <TableRow className="border-b border-border/70 bg-primary/10">
+                  <TableHead className="w-[320px] px-4 py-3 text-foreground">
+                    Short link
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-foreground">
+                    Original URL
+                  </TableHead>
+                  <TableHead className="w-27.5 px-4 py-3 text-right text-foreground">
+                    Clicks
+                  </TableHead>
+                  <TableHead className="w-35 px-4 py-3 text-foreground">
+                    Created
+                  </TableHead>
+                  <TableHead className="w-55 px-4 py-3  text-foreground">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
 
-                <TableBody>
-                  {links.map((link) => {
-                    const isConfirmingDelete = pendingDeleteId === link.id;
-                    const isDeletingThisRow =
-                      deleteLinkMutation.isPending && deletingId === link.id;
+              <TableBody>
+                {links.map((link, index) => {
+                  const isConfirmingDelete = pendingDeleteId === link.id;
+                  const isDeletingThisRow =
+                    deleteLinkMutation.isPending && deletingId === link.id;
 
-                    return (
-                      <TableRow key={link.id}>
-                        <TableCell className="align-top">
-                          <a
-                            href={link.shortLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="focus-premium block max-w-75 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
-                            title={link.shortLink}
+                  return (
+                    <TableRow
+                      key={link.id}
+                      className={
+                        index % 2 === 0
+                          ? "bg-background/10 hover:bg-muted/35"
+                          : "bg-primary/4 hover:bg-primary/[0.14]"
+                      }
+                    >
+                      <TableCell className="px-4 py-3.5 align-top">
+                        <a
+                          href={link.shortLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="focus-premium block max-w-75 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
+                          title={link.shortLink}
+                        >
+                          {link.shortLink}
+                        </a>
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 align-top">
+                        <a
+                          href={link.originalUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block max-w-125 truncate text-sm text-muted-foreground hover:text-foreground hover:underline"
+                          title={link.originalUrl}
+                        >
+                          {link.originalUrl}
+                        </a>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3.5 text-right tabular-nums align-top">
+                        {link.clickCount}
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3.5 text-sm text-muted-foreground align-top">
+                        {formatDateLabel(link.createdAt)}
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3.5 align-top">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate(`/links/${link.id}/stats`)}
                           >
-                            {link.shortLink}
-                          </a>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <a
-                            href={link.originalUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block max-w-125 truncate text-sm text-muted-foreground hover:text-foreground hover:underline"
-                            title={link.originalUrl}
+                            Statistics
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => copyToClipboard(link.shortLink)}
+                            aria-label="Copy short link"
                           >
-                            {link.originalUrl}
-                          </a>
-                        </TableCell>
+                            <Copy className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="px-2.5 text-destructive/85 hover:text-destructive"
+                            onClick={() => startDeleteConfirmation(link.id)}
+                            disabled={isDeletingThisRow}
+                            aria-label="Delete link"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
 
-                        <TableCell className="text-right tabular-nums align-top">
-                          {link.clickCount}
-                        </TableCell>
-
-                        <TableCell className="text-sm text-muted-foreground align-top">
-                          {formatDateLabel(link.createdAt)}
-                        </TableCell>
-
-                        <TableCell className="align-top">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() =>
-                                navigate(`/links/${link.id}/stats`)
-                              }
-                            >
-                              Statistics
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => copyToClipboard(link.shortLink)}
-                            >
-                              Copy
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => startDeleteConfirmation(link.id)}
-                              disabled={isDeletingThisRow}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-
-                          {isConfirmingDelete ? (
-                            <div className="mt-2 flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                              <span>Delete this link?</span>
+                        {isConfirmingDelete ? (
+                          <div className="mt-2 flex justify-end">
+                            <div className="ml-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-md border border-destructive/25 bg-destructive/8 px-2.5 py-2 text-xs">
+                              <span className="text-destructive/90">
+                                Delete this link?
+                              </span>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -255,47 +284,49 @@ export function MyLinksPage() {
                                 {isDeletingThisRow ? "Deleting…" : "Confirm"}
                               </Button>
                             </div>
-                          ) : null}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-          {copyMessage ? (
-            <div className="text-sm text-muted-foreground">{copyMessage}</div>
-          ) : null}
+                          </div>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        {copyMessage ? (
+          <div className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90">
+            {copyMessage}
+          </div>
+        ) : null}
 
-          {(canGoPrevious || canGoNext) && (
-            <div className="flex items-center justify-between rounded-lg border border-border/70 bg-card/60 p-3">
-              <div className="text-sm text-muted-foreground">
-                {myLinksQuery.isFetching
-                  ? "Loading…"
-                  : `${rangeStart}–${rangeEnd} / ${totalCount}`}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={goToPreviousPage}
-                  disabled={!canGoPrevious || myLinksQuery.isFetching}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={goToNextPage}
-                  disabled={!canGoNext || myLinksQuery.isFetching}
-                >
-                  Next
-                </Button>
-              </div>
+        {(canGoPrevious || canGoNext) && (
+          <div className="mt-2 flex items-center justify-between border-t border-border/70 pt-5">
+            <div className="text-sm text-muted-foreground">
+              {myLinksQuery.isFetching
+                ? "Loading…"
+                : `${rangeStart}–${rangeEnd} / ${totalCount}`}
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={goToPreviousPage}
+                disabled={!canGoPrevious || myLinksQuery.isFetching}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                onClick={goToNextPage}
+                disabled={!canGoNext || myLinksQuery.isFetching}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
