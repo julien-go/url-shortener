@@ -43,7 +43,7 @@ export function CreateShortUrlForm() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
-        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-[2.25rem]">
+        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-3xl md:text-[2.25rem]">
           Create a short link
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
