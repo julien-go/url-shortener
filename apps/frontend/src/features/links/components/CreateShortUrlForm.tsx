@@ -52,7 +52,11 @@ export function CreateShortUrlForm() {
       </div>
       <Separator className="my-6 bg-border/80 sm:my-8" />
 
-      <form onSubmit={onSubmit} className="space-y-4.5 sm:space-y-5">
+      <form
+        onSubmit={onSubmit}
+        className="space-y-4.5 sm:space-y-5"
+        aria-busy={createShortUrlMutation.isPending}
+      >
         <div className="mb-5 flex flex-col gap-y-1.5 space-y-2 sm:mb-6">
           <Label htmlFor="originalUrl">Original URL</Label>
           <Input
@@ -62,6 +66,10 @@ export function CreateShortUrlForm() {
             value={originalUrl}
             onChange={(e) => setOriginalUrl(e.target.value)}
             placeholder="https://example.com"
+            aria-invalid={Boolean(errorMessage)}
+            aria-describedby={
+              errorMessage ? "create-short-link-error" : undefined
+            }
           />
         </div>
 
@@ -73,6 +81,10 @@ export function CreateShortUrlForm() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="promo-2026"
+            aria-invalid={Boolean(errorMessage)}
+            aria-describedby={
+              errorMessage ? "create-short-link-error" : undefined
+            }
           />
         </div>
 
@@ -85,7 +97,11 @@ export function CreateShortUrlForm() {
         </Button>
 
         {errorMessage ? (
-          <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p
+            id="create-short-link-error"
+            role="alert"
+            className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
             {errorMessage}
           </p>
         ) : null}
@@ -102,10 +118,12 @@ export function CreateShortUrlForm() {
               href={created.shortLink}
               target="_blank"
               rel="noreferrer"
+              aria-label={`${created.shortLink} (opens in a new tab)`}
               className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary sm:truncate sm:break-normal"
               title={created.shortLink}
             >
               {created.shortLink}
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
 
             <div className="flex flex-wrap gap-2">
@@ -119,7 +137,11 @@ export function CreateShortUrlForm() {
               </Button>
             </div>
             {copyMessage ? (
-              <p className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90">
+              <p
+                role="status"
+                aria-live="polite"
+                className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90"
+              >
                 {copyMessage}
               </p>
             ) : null}

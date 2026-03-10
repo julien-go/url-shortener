@@ -15,6 +15,12 @@ import {
 
 type StatsRange = "DAYS_7" | "DAYS_30";
 
+function formatSeriesDayLabel(dayUtc: string) {
+  const [year, month, day] = dayUtc.split("-");
+  if (!year || !month || !day) return dayUtc;
+  return `${day}/${month}`;
+}
+
 function formatLastClickedAt(value: string | null) {
   if (!value) return "—";
   const dateValue = new Date(value);
@@ -43,7 +49,11 @@ export function LinkStatsPage() {
   const linkStatsQuery = useLinkStats(linkId, range);
   if (linkStatsQuery.isLoading || linkStatsQuery.isFetching) {
     return (
-      <div className="rounded-md border border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
+      <div
+        role="status"
+        aria-live="polite"
+        className="rounded-md border border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground"
+      >
         Loading statistics…
       </div>
     );
@@ -99,6 +109,7 @@ export function LinkStatsPage() {
             <ToggleGroup
               type="single"
               value={range}
+              aria-label="Statistics period"
               onValueChange={(rangeValue: string) => {
                 if (!rangeValue) return;
                 setRange(rangeValue as StatsRange);
@@ -122,6 +133,7 @@ export function LinkStatsPage() {
               size="sm"
               onClick={handleCopyShortLink}
               disabled={!linkDetails?.shortLink}
+              aria-describedby="copy-link-status"
             >
               {copyStatus === "copied"
                 ? "Copied"
@@ -144,11 +156,23 @@ export function LinkStatsPage() {
                 Open
               </a>
             </Button>
+            <span
+              id="copy-link-status"
+              role="status"
+              aria-live="polite"
+              className="sr-only"
+            >
+              {copyStatus === "copied"
+                ? "Short link copied to clipboard."
+                : copyStatus === "error"
+                  ? "Failed to copy short link."
+                  : ""}
+            </span>
           </div>
         </div>
 
         {linkStatsQuery.error ? (
-          <div className="text-sm text-muted-foreground">
+          <div role="alert" className="text-sm text-muted-foreground">
             {getGraphQLRequestErrorMessage(
               linkStatsQuery.error,
               "Unable to load link details.",
@@ -214,7 +238,7 @@ export function LinkStatsPage() {
 
         {linkStatsQuery.error ? (
           <div className="space-y-2">
-            <div className="text-sm text-destructive">
+            <div role="alert" className="text-sm text-destructive">
               Failed to load statistics.
             </div>
             <Button variant="outline" onClick={() => linkStatsQuery.refetch()}>
@@ -226,7 +250,36 @@ export function LinkStatsPage() {
             No clicks yet. Share your link to get started.
           </div>
         ) : (
-          <ClicksBarChart series={series} height={220} />
+          <>
+            <ClicksBarChart series={series} height={220} />
+
+            <div className="sr-only" aria-live="polite">
+              <p>
+                Daily clicks over the selected period ({series.length} days,
+                total {linkStats?.totalClicks ?? 0} clicks).
+              </p>
+              <table className="w-full caption-bottom text-sm">
+                <caption>Accessible data table for clicks per day.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Day (UTC)</th>
+                    <th scope="col">Clicks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {series.map((seriesItem) => (
+                    <tr key={seriesItem.dayUtc}>
+                      <td>
+                        <span>{formatSeriesDayLabel(seriesItem.dayUtc)}</span>
+                        <span> ({seriesItem.dayUtc})</span>
+                      </td>
+                      <td>{seriesItem.clicks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
     </section>

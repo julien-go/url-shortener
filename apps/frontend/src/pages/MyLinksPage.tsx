@@ -8,6 +8,7 @@ import { useDeleteLink } from "../features/links/hooks/useDeleteLink";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -143,11 +144,18 @@ export function MyLinksPage() {
       <div className="space-y-4 px-1 sm:px-0">
         <div className="h-px bg-border/55" />
         {myLinksQuery.isLoading ? (
-          <div className="rounded-lg border border-border/80 bg-muted/35 p-5 text-sm text-muted-foreground">
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-lg border border-border/80 bg-muted/35 p-5 text-sm text-muted-foreground"
+          >
             Loading your links…
           </div>
         ) : myLinksQuery.isError ? (
-          <div className="space-y-2 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+          <div
+            role="alert"
+            className="space-y-2 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive"
+          >
             <p>{errorMessage}</p>
             <Button
               variant="outline"
@@ -184,9 +192,11 @@ export function MyLinksPage() {
                         href={link.shortLink}
                         target="_blank"
                         rel="noreferrer"
+                        aria-label={`${link.shortLink} (opens in a new tab)`}
                         className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
                       >
                         {link.shortLink}
+                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     </div>
 
@@ -198,9 +208,11 @@ export function MyLinksPage() {
                         href={link.originalUrl}
                         target="_blank"
                         rel="noreferrer"
+                        aria-label={`${link.originalUrl} (opens in a new tab)`}
                         className="block break-all text-sm text-muted-foreground hover:text-foreground hover:underline"
                       >
                         {link.originalUrl}
+                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     </div>
 
@@ -276,6 +288,10 @@ export function MyLinksPage() {
 
             <div className="hidden overflow-hidden rounded-lg bg-background/35 md:block">
               <Table className="border-y border-border/65">
+                <TableCaption className="sr-only">
+                  List of your short links with their target URLs, click counts,
+                  creation dates, and row actions.
+                </TableCaption>
                 <TableHeader>
                   <TableRow className="border-b border-border/70 bg-primary/10">
                     <TableHead className="w-[320px] px-4 py-3 text-foreground">
@@ -316,10 +332,14 @@ export function MyLinksPage() {
                             href={link.shortLink}
                             target="_blank"
                             rel="noreferrer"
+                            aria-label={`${link.shortLink} (opens in a new tab)`}
                             className="focus-premium block max-w-75 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
                             title={link.shortLink}
                           >
                             {link.shortLink}
+                            <span className="sr-only">
+                              (opens in a new tab)
+                            </span>
                           </a>
                         </TableCell>
                         <TableCell className="px-4 py-3.5 align-top">
@@ -327,10 +347,14 @@ export function MyLinksPage() {
                             href={link.originalUrl}
                             target="_blank"
                             rel="noreferrer"
+                            aria-label={`${link.originalUrl} (opens in a new tab)`}
                             className="block max-w-125 truncate text-sm text-muted-foreground hover:text-foreground hover:underline"
                             title={link.originalUrl}
                           >
                             {link.originalUrl}
+                            <span className="sr-only">
+                              (opens in a new tab)
+                            </span>
                           </a>
                         </TableCell>
 
@@ -350,6 +374,7 @@ export function MyLinksPage() {
                               onClick={() =>
                                 navigate(`/links/${link.id}/stats`)
                               }
+                              aria-label={`View statistics for ${link.code}`}
                             >
                               Statistics
                             </Button>
@@ -358,7 +383,7 @@ export function MyLinksPage() {
                               size="icon"
                               className="h-8 w-8 text-muted-foreground hover:text-foreground"
                               onClick={() => copyToClipboard(link.shortLink)}
-                              aria-label="Copy short link"
+                              aria-label={`Copy short link ${link.code}`}
                             >
                               <Copy className="size-4" />
                             </Button>
@@ -368,7 +393,7 @@ export function MyLinksPage() {
                               className="px-2.5 text-destructive/85 hover:text-destructive"
                               onClick={() => startDeleteConfirmation(link.id)}
                               disabled={isDeletingThisRow}
-                              aria-label="Delete link"
+                              aria-label={`Delete short link ${link.code}`}
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -408,7 +433,11 @@ export function MyLinksPage() {
           </>
         )}
         {copyMessage ? (
-          <div className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90">
+          <div
+            role="status"
+            aria-live="polite"
+            className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90"
+          >
             {copyMessage}
           </div>
         ) : null}

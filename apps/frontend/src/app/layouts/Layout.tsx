@@ -26,6 +26,12 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
 
   return (
     <div className="min-h-screen w-full px-3 pb-12 pt-3 sm:px-4 md:px-7 md:pt-5">
+      <a
+        href="#main-content"
+        className="focus-premium sr-only absolute left-3 top-3 z-50 rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground focus:not-sr-only"
+      >
+        Skip to main content
+      </a>
       <div
         className={`mx-auto w-full ${getMaxWidthClass(maxWidth)} space-y-10`}
       >
@@ -96,7 +102,9 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
           </div>
         </header>
 
-        <main>{children}</main>
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
       </div>
     </div>
   );
