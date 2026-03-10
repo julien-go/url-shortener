@@ -1,19 +1,19 @@
 export function HomeLanding() {
   return (
     <section
-      className={`mt-10 flex min-h-[60vh] flex-col justify-center space-y-6 sm:mt-12 md:mt-15 md:space-y-9`}
+      className={`mt-10 flex min-h-[60vh] min-w-0 flex-col justify-center space-y-6 sm:mt-12 md:mt-15 md:space-y-9`}
     >
       <div
-        className={`relative overflow-hidden px-1 py-3 mx-auto max-w-3xl text-center sm:px-2 sm:py-4 md:py-5 `}
+        className={`relative mx-auto w-full min-w-0 max-w-3xl overflow-hidden px-1 py-3 text-center sm:px-2 sm:py-4 md:py-5`}
       >
-        <div className="relative space-y-4.5">
+        <div className="relative mx-auto w-full max-w-2xl space-y-4.5">
           <div className="mb-10">
-            <h1 className="font-display max-w-3xl text-[2rem] font-black tracking-[-0.045em] text-foreground sm:text-5xl md:text-[4.15rem] md:leading-[0.9]">
+            <h1 className="font-display mx-auto max-w-3xl text-[2rem] font-black tracking-[-0.045em] text-foreground sm:text-5xl md:text-[4.15rem] md:leading-[0.9]">
               Shorten URLs,
               <br />
               instantly.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="mt-5 mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
               Create short URLs and manage them from a clean interface.
             </p>
           </div>
@@ -29,12 +29,12 @@ export function HomeLanding() {
           </div>
 
           <div
-            className={`mx-auto mt-7 flex max-w-2xl flex-col gap-2.5 rounded-xl border border-border bg-card/96 p-4 text-left shadow-(--shadow-surface) sm:p-5`}
+            className={`mx-auto mt-7 flex w-full min-w-0 max-w-2xl flex-col gap-2.5 rounded-xl border border-border bg-card/96 p-4 text-left shadow-(--shadow-surface) sm:p-5`}
           >
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               example
             </p>
-            <p className="mt-1 truncate text-sm text-muted-foreground/72">
+            <p className="mt-1 min-w-0 truncate text-sm text-muted-foreground/72">
               https://docs.example.com/product/launch/roadmap/q4/campaign-overview-and-onboarding-checklist
             </p>
             <p className="mt-1 text-base font-semibold leading-none text-foreground/85">
