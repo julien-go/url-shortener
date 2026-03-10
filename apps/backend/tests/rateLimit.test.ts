@@ -63,6 +63,12 @@ describe("rateLimit", () => {
 
     expect(next).toHaveBeenCalledTimes(2);
     expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.setHeader).toHaveBeenCalledWith("X-RateLimit-Limit", "2");
+    expect(res.setHeader).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
+    expect(res.setHeader).toHaveBeenCalledWith(
+      "RateLimit-Policy",
+      expect.stringMatching(/^2;w=\d+$/),
+    );
     expect(res.setHeader).toHaveBeenCalledWith(
       "Retry-After",
       expect.any(String),
@@ -117,6 +123,27 @@ describe("rateLimit", () => {
 
     expect(next).toHaveBeenCalledTimes(2);
     expect(res.status).not.toHaveBeenCalled();
+    expect(res.setHeader).not.toHaveBeenCalled();
+  });
+
+  it("adds rate-limit headers for allowed requests", () => {
+    const limiter = createFixedWindowRateLimit({
+      name: "test-headers",
+      max: 2,
+      windowMs: 60_000,
+      keyGenerator: (req) => req.ip ?? "unknown-ip",
+    });
+
+    const req = makeReq();
+    const res = makeRes();
+    const next = vi.fn();
+
+    limiter(req as never, res as never, next);
+    limiter(req as never, res as never, next);
+
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(res.setHeader).toHaveBeenCalledWith("X-RateLimit-Limit", "2");
+    expect(res.setHeader).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
   });
 
   it("supports custom onLimit handler", () => {
