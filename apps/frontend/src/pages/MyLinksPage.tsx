@@ -183,7 +183,7 @@ export function MyLinksPage() {
                 return (
                   <article
                     key={link.id}
-                    className="space-y-3 rounded-lg border border-border/80 bg-background/45 p-4"
+                    className="space-y-3 rounded-lg border border-border/80 bg-background p-4"
                   >
                     <div className="space-y-1.5">
                       <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
@@ -324,8 +324,8 @@ export function MyLinksPage() {
                         key={link.id}
                         className={
                           index % 2 === 0
-                            ? "bg-background/10 hover:bg-muted/35"
-                            : "bg-primary/4 hover:bg-primary/[0.14]"
+                            ? "bg-background/10 hover:bg-muted/75"
+                            : "bg-primary/4 hover:bg-primary/10"
                         }
                       >
                         <TableCell className="px-4 py-3.5 align-top">
@@ -334,7 +334,7 @@ export function MyLinksPage() {
                             target="_blank"
                             rel="noreferrer"
                             aria-label={`${link.shortLink} (opens in a new tab)`}
-                            className="focus-premium block max-w-75 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
+                            className="focus-premium block max-w-75 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition "
                             title={link.shortLink}
                           >
                             {link.shortLink}
