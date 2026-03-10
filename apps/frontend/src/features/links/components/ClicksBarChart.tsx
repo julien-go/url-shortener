@@ -35,20 +35,33 @@ export function ClicksBarChart({ series, height = 260 }: ClicksBarChartProps) {
   }, [series]);
 
   return (
-    <div style={{ width: "100%", height }}>
+    <div style={{ width: "100%", height }} className="min-w-0">
       <ResponsiveContainer>
         <BarChart
           data={chartData}
           margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
           <XAxis
             dataKey="dayLabel"
+            stroke="var(--muted-foreground)"
             tickMargin={8}
             interval="preserveStartEnd"
+            minTickGap={24}
           />
-          <YAxis allowDecimals={false} tickMargin={8} />
+          <YAxis
+            allowDecimals={false}
+            stroke="var(--muted-foreground)"
+            tickMargin={8}
+          />
           <Tooltip
+            contentStyle={{
+              backgroundColor: "var(--popover)",
+              borderColor: "var(--border)",
+              borderRadius: "var(--radius)",
+              color: "var(--popover-foreground)",
+            }}
+            labelStyle={{ color: "var(--muted-foreground)" }}
             formatter={(value) => {
               const numericValue =
                 typeof value === "number" ? value : Number(value);
@@ -63,7 +76,7 @@ export function ClicksBarChart({ series, height = 260 }: ClicksBarChartProps) {
               return dayUtc ? `Day (UTC): ${dayUtc}` : String(label);
             }}
           />
-          <Bar dataKey="clicks" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="clicks" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -71,7 +71,7 @@ export const env = {
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
   COOKIE_PATH: process.env.COOKIE_PATH ?? "/",
   COOKIE_SECURE: envBoolean("COOKIE_SECURE", false),
-  COOKIE_MAX_AGE_SECONDS: envNumber("COOKIE_MAX_AGE_SECONDS", 15 * 60),
+  COOKIE_MAX_AGE_SECONDS: envNumber("COOKIE_MAX_AGE_SECONDS", 30 * 60),
   ENABLE_CSP: envBoolean("ENABLE_CSP", true),
   METRICS_ENABLED,
   METRICS_API_KEY,
