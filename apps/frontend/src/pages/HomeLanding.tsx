@@ -6,7 +6,7 @@ export function HomeLanding() {
       <div
         className={`relative overflow-hidden px-1 py-3 mx-auto max-w-3xl text-center sm:px-2 sm:py-4 md:py-5 `}
       >
-        <div className="relative space-y-4.5 max-w-sm">
+        <div className="relative space-y-4.5">
           <div className="mb-10">
             <h1 className="font-display max-w-3xl text-[2rem] font-black tracking-[-0.045em] text-foreground sm:text-5xl md:text-[4.15rem] md:leading-[0.9]">
               Shorten URLs,
