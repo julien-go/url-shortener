@@ -34,8 +34,12 @@ export function LoginForm() {
     : null;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form
+      onSubmit={onSubmit}
+      className="space-y-4.5 sm:space-y-5"
+      aria-busy={loginMutation.isPending}
+    >
+      <div className="mb-5 flex flex-col gap-y-1.5 space-y-2 sm:mb-6">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
@@ -43,11 +47,13 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
           placeholder="you@example.com"
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? "login-form-error" : undefined}
           required
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="mb-5 flex flex-col gap-y-1.5 space-y-2 sm:mb-6">
         <Label htmlFor="password">Password</Label>
         <Input
           id="password"
@@ -56,6 +62,8 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           placeholder="••••••••"
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? "login-form-error" : undefined}
           required
         />
       </div>
@@ -69,10 +77,16 @@ export function LoginForm() {
       </Button>
 
       {errorMessage ? (
-        <p className="text-sm text-destructive">{errorMessage}</p>
+        <p
+          id="login-form-error"
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {errorMessage}
+        </p>
       ) : null}
 
-      <p className="text-sm text-muted-foreground">
+      <p className="pt-1 text-sm text-muted-foreground">
         No account?{" "}
         <Link to="/register" className="underline hover:text-foreground">
           Create one

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { AuthContext, type AuthContextValue } from "./authContext";
 import { logout as logoutMutation } from "../../features/auth/api/logout.mutation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,22 +13,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [queryClient]);
 
-  async function refreshSession() {
+  const refreshSession = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["me"] });
-  }
+  }, [queryClient]);
 
-  async function logout() {
+  const logout = useCallback(async () => {
     try {
       await logoutMutation();
     } finally {
       await queryClient.setQueryData(["me"], { me: null });
       await queryClient.invalidateQueries({ queryKey: ["myLinks"] });
     }
-  }
+  }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({ refreshSession, logout }),
-    [queryClient],
+    [logout, refreshSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

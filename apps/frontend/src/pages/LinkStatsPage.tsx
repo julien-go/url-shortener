@@ -1,17 +1,12 @@
 import * as React from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { Separator } from "../components/ui/separator";
+
 import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import { useLinkStats } from "../features/links/hooks/useLinkStats";
 
 import { ClicksBarChart } from "../features/links/components/ClicksBarChart";
-import { DashboardLayout } from "../app/layouts/DashboardLayout";
 import {
   getGraphQLErrorCode,
   getGraphQLRequestErrorMessage,
@@ -19,6 +14,12 @@ import {
 } from "../features/links/hooks/errors";
 
 type StatsRange = "DAYS_7" | "DAYS_30";
+
+function formatSeriesDayLabel(dayUtc: string) {
+  const [year, month, day] = dayUtc.split("-");
+  if (!year || !month || !day) return dayUtc;
+  return `${day}/${month}`;
+}
 
 function formatLastClickedAt(value: string | null) {
   if (!value) return "—";
@@ -48,13 +49,13 @@ export function LinkStatsPage() {
   const linkStatsQuery = useLinkStats(linkId, range);
   if (linkStatsQuery.isLoading || linkStatsQuery.isFetching) {
     return (
-      <DashboardLayout maxWidth="xl">
-        <div className="mx-auto w-full max-w-4xl p-4">
-          <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-            Loading statistics…
-          </div>
-        </div>
-      </DashboardLayout>
+      <div
+        role="status"
+        aria-live="polite"
+        className="rounded-md border border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground"
+      >
+        Loading statistics…
+      </div>
     );
   }
 
@@ -87,173 +88,200 @@ export function LinkStatsPage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="mx-auto w-full max-w-4xl space-y-6 p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold">Link statistics</h1>
-
+    <section className="space-y-5">
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-[2.15rem]">
+              Link statistics
+            </h1>
             <p className="text-sm text-muted-foreground">
-              <Link to="/links" className="underline underline-offset-4">
+              <Link
+                to="/links"
+                className="underline decoration-primary/60 underline-offset-4 hover:text-foreground"
+              >
                 Back to my links
               </Link>
             </p>
           </div>
 
-          <ToggleGroup
-            type="single"
-            value={range}
-            onValueChange={(rangeValue: string) => {
-              if (!rangeValue) return;
-              setRange(rangeValue as StatsRange);
-            }}
-          >
-            <ToggleGroupItem value="DAYS_7">7 days</ToggleGroupItem>
-            <ToggleGroupItem value="DAYS_30">30 days</ToggleGroupItem>
-          </ToggleGroup>
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+            <ToggleGroup
+              type="single"
+              value={range}
+              aria-label="Statistics period"
+              onValueChange={(rangeValue: string) => {
+                if (!rangeValue) return;
+                setRange(rangeValue as StatsRange);
+              }}
+            >
+              <ToggleGroupItem value="DAYS_7">7 days</ToggleGroupItem>
+              <ToggleGroupItem value="DAYS_30">30 days</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </div>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Link</CardTitle>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleCopyShortLink}
-                disabled={!linkDetails?.shortLink}
-              >
-                {copyStatus === "copied"
-                  ? "Copied"
-                  : copyStatus === "error"
-                    ? "Copy failed"
-                    : "Copy"}
-              </Button>
-
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                disabled={!linkDetails?.shortLink}
-              >
-                <a
-                  href={linkDetails?.shortLink ?? "#"}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open
-                </a>
-              </Button>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-3 text-sm">
-            {linkStatsQuery.isLoading ? (
-              <div className="text-muted-foreground">Loading link details…</div>
-            ) : linkStatsQuery.error ? (
-              <div className="text-muted-foreground">
-                {getGraphQLRequestErrorMessage(
-                  linkStatsQuery.error,
-                  "Unable to load link details.",
-                )}
-              </div>
-            ) : linkDetails ? (
-              <>
-                <div className="space-y-1">
-                  <div className="text-muted-foreground">Short link</div>
-                  <div className="font-mono break-all">
-                    {linkDetails.shortLink}
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="text-muted-foreground">Target URL</div>
-                  <div className="break-all">{linkDetails.originalUrl}</div>
-                </div>
-
-                <div className="flex flex-wrap gap-6 pt-1">
-                  <div>
-                    <div className="text-muted-foreground">Code</div>
-                    <div className="font-mono">{linkDetails.code}</div>
-                  </div>
-
-                  <div>
-                    <div className="text-muted-foreground">Clicks</div>
-                    <div>{linkDetails.clickCount}</div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-muted-foreground">Link not found.</div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total clicks</CardTitle>
-            </CardHeader>
-            <CardContent className="text-3xl font-bold">
-              {linkStats?.totalClicks ?? (linkStatsQuery.isLoading ? "…" : "—")}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Last click</CardTitle>
-            </CardHeader>
-            <CardContent className="text-lg">
-              {linkStats
-                ? formatLastClickedAt(linkStats.lastClickedAt)
-                : linkStatsQuery.isLoading
-                  ? "…"
-                  : "—"}
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Clicks per day</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => linkStatsQuery.refetch()}
-                disabled={linkStatsQuery.isFetching}
-              >
-                Refresh
-              </Button>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            {linkStatsQuery.isLoading ? (
-              <div className="text-sm text-muted-foreground">Loading…</div>
-            ) : linkStatsQuery.error ? (
-              <div className="space-y-2">
-                <div className="text-sm text-destructive">
-                  Failed to load statistics.
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => linkStatsQuery.refetch()}
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : series.length === 0 ? (
-              <div className="text-sm text-muted-foreground">
-                No clicks yet. Share your link to get started.
-              </div>
-            ) : (
-              <ClicksBarChart series={series} />
-            )}
-          </CardContent>
-        </Card>
+        <Separator className="bg-border/80" />
       </div>
-    </DashboardLayout>
+
+      <section className="space-y-4 border-b border-border/70 pb-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold">Link</h2>
+
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleCopyShortLink}
+              disabled={!linkDetails?.shortLink}
+              aria-describedby="copy-link-status"
+            >
+              {copyStatus === "copied"
+                ? "Copied"
+                : copyStatus === "error"
+                  ? "Copy failed"
+                  : "Copy"}
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              disabled={!linkDetails?.shortLink}
+            >
+              <a
+                href={linkDetails?.shortLink ?? "#"}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open
+              </a>
+            </Button>
+            <span
+              id="copy-link-status"
+              role="status"
+              aria-live="polite"
+              className="sr-only"
+            >
+              {copyStatus === "copied"
+                ? "Short link copied to clipboard."
+                : copyStatus === "error"
+                  ? "Failed to copy short link."
+                  : ""}
+            </span>
+          </div>
+        </div>
+
+        {linkStatsQuery.error ? (
+          <div role="alert" className="text-sm text-muted-foreground">
+            {getGraphQLRequestErrorMessage(
+              linkStatsQuery.error,
+              "Unable to load link details.",
+            )}
+          </div>
+        ) : linkDetails ? (
+          <div className="grid gap-4 text-sm md:grid-cols-2">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <div className="text-muted-foreground">Short link</div>
+                <div className="font-mono break-all">
+                  {linkDetails.shortLink}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-muted-foreground">Slug</div>
+                <div className="font-mono">{linkDetails.code}</div>
+              </div>
+            </div>
+
+            <div className="space-y-1 md:border-l md:border-border/70 md:pl-5">
+              <div className="text-muted-foreground">Target URL</div>
+              <div className="break-all">{linkDetails.originalUrl}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">Link not found.</div>
+        )}
+      </section>
+
+      <section className="grid gap-4 border-b border-border/70 pb-5 md:grid-cols-2">
+        <div className="space-y-1">
+          <div className="text-sm text-muted-foreground">Total clicks</div>
+          <div className="text-3xl font-bold leading-tight">
+            {linkStats?.totalClicks ?? (linkStatsQuery.isLoading ? "…" : "—")}
+          </div>
+        </div>
+        <div className="space-y-1 md:border-l md:border-border/70 md:pl-5">
+          <div className="text-sm text-muted-foreground">Last click</div>
+          <div className="text-2xl font-semibold leading-tight md:text-[1.65rem]">
+            {linkStats
+              ? formatLastClickedAt(linkStats.lastClickedAt)
+              : linkStatsQuery.isLoading
+                ? "…"
+                : "—"}
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold">Clicks per day</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => linkStatsQuery.refetch()}
+            disabled={linkStatsQuery.isFetching}
+          >
+            Refresh
+          </Button>
+        </div>
+
+        {linkStatsQuery.error ? (
+          <div className="space-y-2">
+            <div role="alert" className="text-sm text-destructive">
+              Failed to load statistics.
+            </div>
+            <Button variant="outline" onClick={() => linkStatsQuery.refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : series.length === 0 ? (
+          <div className="text-sm text-muted-foreground">
+            No clicks yet. Share your link to get started.
+          </div>
+        ) : (
+          <>
+            <ClicksBarChart series={series} height={220} />
+
+            <div className="sr-only" aria-live="polite">
+              <p>
+                Daily clicks over the selected period ({series.length} days,
+                total {linkStats?.totalClicks ?? 0} clicks).
+              </p>
+              <table className="w-full caption-bottom text-sm">
+                <caption>Accessible data table for clicks per day.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Day (UTC)</th>
+                    <th scope="col">Clicks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {series.map((seriesItem) => (
+                    <tr key={seriesItem.dayUtc}>
+                      <td>
+                        <span>{formatSeriesDayLabel(seriesItem.dayUtc)}</span>
+                        <span> ({seriesItem.dayUtc})</span>
+                      </td>
+                      <td>{seriesItem.clicks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </section>
+    </section>
   );
 }

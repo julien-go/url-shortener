@@ -5,7 +5,7 @@ import { getCreateShortUrlErrorMessage } from "../hooks/errors";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
-import { Card } from "../../../components/ui/card";
+import { Separator } from "../../../components/ui/separator";
 
 export function CreateShortUrlForm() {
   const [originalUrl, setOriginalUrl] = React.useState("");
@@ -41,16 +41,23 @@ export function CreateShortUrlForm() {
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Create a short link</h2>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-2">
+        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-3xl md:text-[2.25rem]">
+          Create a short link
+        </h1>
+        <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
           Paste a URL and optionally choose a custom slug.
         </p>
       </div>
+      <Separator className="my-6 bg-border/80 sm:my-8" />
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
+      <form
+        onSubmit={onSubmit}
+        className="space-y-4.5 sm:space-y-5"
+        aria-busy={createShortUrlMutation.isPending}
+      >
+        <div className="mb-5 flex flex-col gap-y-1.5 space-y-2 sm:mb-6">
           <Label htmlFor="originalUrl">Original URL</Label>
           <Input
             id="originalUrl"
@@ -59,10 +66,14 @@ export function CreateShortUrlForm() {
             value={originalUrl}
             onChange={(e) => setOriginalUrl(e.target.value)}
             placeholder="https://example.com"
+            aria-invalid={Boolean(errorMessage)}
+            aria-describedby={
+              errorMessage ? "create-short-link-error" : undefined
+            }
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-y-1.5 space-y-2">
           <Label htmlFor="code">Custom slug (optional)</Label>
           <Input
             id="code"
@@ -70,6 +81,10 @@ export function CreateShortUrlForm() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="promo-2026"
+            aria-invalid={Boolean(errorMessage)}
+            aria-describedby={
+              errorMessage ? "create-short-link-error" : undefined
+            }
           />
         </div>
 
@@ -82,26 +97,36 @@ export function CreateShortUrlForm() {
         </Button>
 
         {errorMessage ? (
-          <p className="text-sm text-destructive">{errorMessage}</p>
+          <p
+            id="create-short-link-error"
+            role="alert"
+            className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {errorMessage}
+          </p>
         ) : null}
       </form>
 
       {created ? (
-        <Card className="rounded-xl p-4">
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Short link</div>
+        <div className="border-t border-border/80 pt-4 sm:pt-5">
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-muted-foreground">
+              Short link
+            </div>
 
             <a
               href={created.shortLink}
               target="_blank"
               rel="noreferrer"
-              className="block truncate font-mono text-sm underline underline-offset-4"
+              aria-label={`${created.shortLink} (opens in a new tab)`}
+              className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary sm:truncate sm:break-normal"
               title={created.shortLink}
             >
               {created.shortLink}
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={copyCreatedLink}>
                 Copy
               </Button>
@@ -112,10 +137,16 @@ export function CreateShortUrlForm() {
               </Button>
             </div>
             {copyMessage ? (
-              <p className="text-sm text-muted-foreground">{copyMessage}</p>
+              <p
+                role="status"
+                aria-live="polite"
+                className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90"
+              >
+                {copyMessage}
+              </p>
             ) : null}
           </div>
-        </Card>
+        </div>
       ) : null}
     </div>
   );
