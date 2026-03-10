@@ -164,8 +164,114 @@ export function MyLinksPage() {
               : "No result for the current search."}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-lg bg-background/35">
-            <Table className="border-y border-border/65">
+          <>
+            <div className="space-y-3 md:hidden">
+              {links.map((link) => {
+                const isConfirmingDelete = pendingDeleteId === link.id;
+                const isDeletingThisRow =
+                  deleteLinkMutation.isPending && deletingId === link.id;
+
+                return (
+                  <article
+                    key={link.id}
+                    className="space-y-3 rounded-lg border border-border/80 bg-background/45 p-4"
+                  >
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                        Short link
+                      </p>
+                      <a
+                        href={link.shortLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
+                      >
+                        {link.shortLink}
+                      </a>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                        Target URL
+                      </p>
+                      <a
+                        href={link.originalUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block break-all text-sm text-muted-foreground hover:text-foreground hover:underline"
+                      >
+                        {link.originalUrl}
+                      </a>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Clicks</p>
+                        <p className="font-semibold tabular-nums">{link.clickCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Created</p>
+                        <p className="font-medium text-foreground/90">
+                          {formatDateLabel(link.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/links/${link.id}/stats`)}
+                      >
+                        Statistics
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(link.shortLink)}
+                      >
+                        Copy
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="col-span-2 text-destructive/85 hover:text-destructive"
+                        onClick={() => startDeleteConfirmation(link.id)}
+                        disabled={isDeletingThisRow}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+
+                    {isConfirmingDelete ? (
+                      <div className="space-y-2 rounded-md border border-destructive/25 bg-destructive/8 p-2.5 text-xs">
+                        <span className="text-destructive/90">Delete this link?</span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={cancelDeleteConfirmation}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => confirmDeleteLink(link.id)}
+                            disabled={isDeletingThisRow}
+                          >
+                            {isDeletingThisRow ? "Deleting…" : "Confirm"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="hidden overflow-hidden rounded-lg bg-background/35 md:block">
+              <Table className="border-y border-border/65">
               <TableHeader>
                 <TableRow className="border-b border-border/70 bg-primary/10">
                   <TableHead className="w-[320px] px-4 py-3 text-foreground">
@@ -291,8 +397,9 @@ export function MyLinksPage() {
                   );
                 })}
               </TableBody>
-            </Table>
-          </div>
+              </Table>
+            </div>
+          </>
         )}
         {copyMessage ? (
           <div className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90">
@@ -301,7 +408,7 @@ export function MyLinksPage() {
         ) : null}
 
         {(canGoPrevious || canGoNext) && (
-          <div className="mt-2 flex items-center justify-between border-t border-border/70 pt-5">
+          <div className="mt-2 flex flex-col gap-3 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">
               {myLinksQuery.isFetching
                 ? "Loading…"

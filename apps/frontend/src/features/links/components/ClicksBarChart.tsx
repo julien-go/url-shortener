@@ -35,7 +35,7 @@ export function ClicksBarChart({ series, height = 260 }: ClicksBarChartProps) {
   }, [series]);
 
   return (
-    <div style={{ width: "100%", height }}>
+    <div style={{ width: "100%", height }} className="min-w-0">
       <ResponsiveContainer>
         <BarChart
           data={chartData}
@@ -47,6 +47,7 @@ export function ClicksBarChart({ series, height = 260 }: ClicksBarChartProps) {
             stroke="var(--muted-foreground)"
             tickMargin={8}
             interval="preserveStartEnd"
+            minTickGap={24}
           />
           <YAxis
             allowDecimals={false}
