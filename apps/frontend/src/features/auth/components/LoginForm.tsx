@@ -34,7 +34,11 @@ export function LoginForm() {
     : null;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4.5 sm:space-y-5">
+    <form
+      onSubmit={onSubmit}
+      className="space-y-4.5 sm:space-y-5"
+      aria-busy={loginMutation.isPending}
+    >
       <div className="mb-5 flex flex-col gap-y-1.5 space-y-2 sm:mb-6">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -43,6 +47,8 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
           placeholder="you@example.com"
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? "login-form-error" : undefined}
           required
         />
       </div>
@@ -56,6 +62,8 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           placeholder="••••••••"
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? "login-form-error" : undefined}
           required
         />
       </div>
@@ -69,7 +77,11 @@ export function LoginForm() {
       </Button>
 
       {errorMessage ? (
-        <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p
+          id="login-form-error"
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           {errorMessage}
         </p>
       ) : null}

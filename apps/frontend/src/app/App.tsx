@@ -11,7 +11,15 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   const meQuery = useMe();
 
   if (meQuery.isLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="p-6 text-sm text-muted-foreground"
+      >
+        Loading…
+      </div>
+    );
   }
 
   if (!meQuery.data) {
