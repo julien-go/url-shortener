@@ -95,7 +95,7 @@ export function LinkStatsPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
             <ToggleGroup
               type="single"
               value={range}
@@ -113,10 +113,10 @@ export function LinkStatsPage() {
       </div>
 
       <section className="space-y-4 border-b border-border/70 pb-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold">Link</h2>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <Button
               variant="secondary"
               size="sm"
@@ -170,9 +170,7 @@ export function LinkStatsPage() {
               </div>
             </div>
 
-            <div className="space-y-4"></div>
-
-            <div className="space-y-1">
+            <div className="space-y-1 md:border-l md:border-border/70 md:pl-5">
               <div className="text-muted-foreground">Target URL</div>
               <div className="break-all">{linkDetails.originalUrl}</div>
             </div>
@@ -202,7 +200,7 @@ export function LinkStatsPage() {
       </section>
 
       <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold">Clicks per day</h2>
           <Button
             variant="outline"

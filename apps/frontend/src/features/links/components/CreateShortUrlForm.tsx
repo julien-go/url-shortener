@@ -41,19 +41,19 @@ export function CreateShortUrlForm() {
   };
 
   return (
-    <div className="space-y-8 sm:space-y-10">
+    <div className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
-        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-[2.25rem]">
+        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-[2.25rem]">
           Create a short link
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
           Paste a URL and optionally choose a custom slug.
         </p>
       </div>
-      <Separator className="my-8 bg-border/80" />
+      <Separator className="my-6 bg-border/80 sm:my-8" />
 
-      <form onSubmit={onSubmit} className="space-y-5">
-        <div className="flex flex-col space-y-2.5 gap-y-1.5 mb-8">
+      <form onSubmit={onSubmit} className="space-y-4.5 sm:space-y-5">
+        <div className="mb-5 flex flex-col gap-y-1.5 space-y-2 sm:mb-6">
           <Label htmlFor="originalUrl">Original URL</Label>
           <Input
             id="originalUrl"
@@ -65,7 +65,7 @@ export function CreateShortUrlForm() {
           />
         </div>
 
-        <div className="flex flex-col space-y-2.5 gap-y-1.5">
+        <div className="flex flex-col gap-y-1.5 space-y-2">
           <Label htmlFor="code">Custom slug (optional)</Label>
           <Input
             id="code"
@@ -102,7 +102,7 @@ export function CreateShortUrlForm() {
               href={created.shortLink}
               target="_blank"
               rel="noreferrer"
-              className="focus-premium block truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
+              className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary sm:truncate sm:break-normal"
               title={created.shortLink}
             >
               {created.shortLink}
