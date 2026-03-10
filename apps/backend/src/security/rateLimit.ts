@@ -37,6 +37,24 @@ function write429(res: Response, retryAfterSeconds: number): void {
   });
 }
 
+function writeRateLimitHeaders(
+  res: Response,
+  options: { limit: number; remaining: number; resetAtMs: number },
+): void {
+  const resetAfterSeconds = Math.max(
+    1,
+    Math.ceil((options.resetAtMs - Date.now()) / 1000),
+  );
+
+  res.setHeader("X-RateLimit-Limit", String(options.limit));
+  res.setHeader(
+    "X-RateLimit-Remaining",
+    String(Math.max(0, options.remaining)),
+  );
+  res.setHeader("X-RateLimit-Reset", String(resetAfterSeconds));
+  res.setHeader("RateLimit-Policy", `${options.limit};w=${resetAfterSeconds}`);
+}
+
 function cleanupExpiredBuckets(
   now: number,
   buckets: Map<string, Bucket>,
@@ -79,7 +97,13 @@ export function createFixedWindowRateLimit(
 
     const bucket = buckets.get(key);
     if (!bucket || bucket.resetAt <= now) {
-      buckets.set(key, { count: 1, resetAt: now + windowMs });
+      const resetAt = now + windowMs;
+      buckets.set(key, { count: 1, resetAt });
+      writeRateLimitHeaders(res, {
+        limit: max,
+        remaining: max - 1,
+        resetAtMs: resetAt,
+      });
       return next();
     }
 
@@ -88,6 +112,12 @@ export function createFixedWindowRateLimit(
         1,
         Math.ceil((bucket.resetAt - now) / 1000),
       );
+
+      writeRateLimitHeaders(res, {
+        limit: max,
+        remaining: 0,
+        resetAtMs: bucket.resetAt,
+      });
 
       trackBlocked(name);
 
@@ -111,6 +141,11 @@ export function createFixedWindowRateLimit(
     }
 
     bucket.count += 1;
+    writeRateLimitHeaders(res, {
+      limit: max,
+      remaining: max - bucket.count,
+      resetAtMs: bucket.resetAt,
+    });
     next();
   };
 }

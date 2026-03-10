@@ -21,6 +21,10 @@ describe("shortUrls.utils", () => {
       false,
     );
     expect(isValidHttpUrl("http://[::1]")).toBe(false);
+    expect(isValidHttpUrl("http://[fc00::1234]")).toBe(false);
+    expect(isValidHttpUrl("http://[fd12:3456:789a::1]")).toBe(false);
+    expect(isValidHttpUrl("http://[fe80::1]")).toBe(false);
+    expect(isValidHttpUrl("http://[::ffff:192.168.1.10]")).toBe(false);
     expect(
       isValidHttpUrl("http://metadata.google.internal/computeMetadata/v1"),
     ).toBe(false);
@@ -33,10 +37,29 @@ describe("shortUrls.utils", () => {
     expect(isValidSlug("bad@slug")).toBe(false);
   });
 
+  it("rejects reserved slugs", () => {
+    expect(isValidSlug("graphql")).toBe(false);
+    expect(isValidSlug("healthz")).toBe(false);
+    expect(isValidSlug("my-custom-slug")).toBe(true);
+  });
+
   it("generates random slug with expected length and charset", () => {
     const slug = generateRandomSlug(12);
     expect(slug).toHaveLength(12);
     expect(slug).toMatch(/^[a-zA-Z0-9]+$/);
+  });
+
+  it("keeps generator robust across multiple runs", () => {
+    const generated = new Set<string>();
+
+    for (let i = 0; i < 200; i++) {
+      const slug = generateRandomSlug(7);
+      expect(slug).toHaveLength(7);
+      expect(slug).toMatch(/^[a-zA-Z0-9]+$/);
+      generated.add(slug);
+    }
+
+    expect(generated.size).toBeGreaterThan(180);
   });
 
   it("detects postgres unique_violation errors", () => {
