@@ -68,6 +68,12 @@ describe("authRateLimit middleware", () => {
     expect(next).toHaveBeenCalledTimes(5);
     expect(res.status).toHaveBeenCalledWith(429);
     expect(res.setHeader).toHaveBeenCalledWith(
+      "X-RateLimit-Limit",
+      expect.any(String),
+    );
+    expect(res.setHeader).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
+
+    expect(res.setHeader).toHaveBeenCalledWith(
       "Retry-After",
       expect.any(String),
     );
