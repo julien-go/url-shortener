@@ -165,7 +165,7 @@ export function LinkStatsPage() {
               </div>
 
               <div className="space-y-1">
-                <div className="text-muted-foreground">Code</div>
+                <div className="text-muted-foreground">Slug</div>
                 <div className="font-mono">{linkDetails.code}</div>
               </div>
             </div>
@@ -175,11 +175,6 @@ export function LinkStatsPage() {
             <div className="space-y-1">
               <div className="text-muted-foreground">Target URL</div>
               <div className="break-all">{linkDetails.originalUrl}</div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="text-muted-foreground">Clicks</div>
-              <div>{linkDetails.clickCount}</div>
             </div>
           </div>
         ) : (
