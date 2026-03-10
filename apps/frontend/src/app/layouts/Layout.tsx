@@ -25,16 +25,13 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
   const isSignedIn = Boolean(meQuery.data);
 
   return (
-    <div className="min-h-screen w-full px-4 pb-14 pt-4 md:px-7 md:pt-5">
+    <div className="min-h-screen w-full px-3 pb-12 pt-3 sm:px-4 md:px-7 md:pt-5">
       <div
         className={`mx-auto w-full ${getMaxWidthClass(maxWidth)} space-y-10`}
       >
-        <header
-          className="sticky top-0 z-30 py-4.5 md:py-6 border-b border-border/50 bg-background/35 supports-backdrop-filter:bg-background/25 backdrop-blur-sm supports-backdrop-filter:backdrop-blur-md
-"
-        >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-4">
+        <header className="sticky top-0 z-30 border-b border-border/50 bg-background/45 py-3 supports-backdrop-filter:bg-background/25 supports-backdrop-filter:backdrop-blur-md md:py-5">
+          <div className="flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-2 sm:gap-2.5 md:flex-row md:flex-wrap md:items-center md:gap-4">
               <Link
                 to="/"
                 className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.14rem] font-bold text-foreground transition hover:text-primary"
@@ -47,7 +44,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                 className="hidden h-6 md:block"
               />
 
-              <nav className="flex items-center gap-1 rounded-lg border border-border/70 bg-background/55 p-1 text-[0.95rem]">
+              <nav className="flex w-full items-center gap-1 overflow-x-auto rounded-lg border border-border/70 bg-background/55 p-1 text-[0.95rem] md:w-auto md:overflow-visible">
                 <NavLink
                   to="/"
                   end
@@ -74,7 +71,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
             </div>
 
             {!isSignedIn ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full flex-wrap gap-2 md:w-auto md:justify-end">
                 <Button asChild variant="outline">
                   <Link to="/login">Sign in</Link>
                 </Button>
@@ -83,7 +80,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex w-full flex-wrap items-center gap-2.5 md:w-auto md:justify-end">
                 <Badge variant="secondary">
                   {meQuery.isLoading
                     ? "Loading…"
