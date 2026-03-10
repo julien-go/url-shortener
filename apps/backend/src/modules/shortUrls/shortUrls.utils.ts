@@ -1,4 +1,6 @@
+import { randomInt } from "node:crypto";
 import {
+  RESERVED_CODES,
   SLUG_MAX_LENGTH,
   SLUG_MIN_LENGTH,
   SLUG_REGEX,
@@ -39,10 +41,36 @@ function isPrivateOrSensitiveHost(hostname: string): boolean {
     return true;
   }
 
-  if (normalized === "::1") return true;
-
   if (isIPv4(normalized)) {
     return isPrivateIPv4(normalized);
+  }
+
+  if (isSensitiveIPv6(normalized)) {
+    return true;
+  }
+
+  return false;
+}
+
+function isSensitiveIPv6(value: string): boolean {
+  if (!value.includes(":")) return false;
+
+  const normalized = value.toLowerCase();
+
+  if (normalized === "::1") return true;
+  if (normalized.startsWith("fe80:")) return true; // link-local
+
+  const firstHextet = normalized.split(":", 1)[0];
+
+  if (/^[0-9a-f]{1,4}$/.test(firstHextet)) {
+    const parsed = Number.parseInt(firstHextet, 16);
+
+    if ((parsed & 0xfe00) === 0xfc00) return true;
+  }
+
+  const mappedPrefix = "::ffff:";
+  if (normalized.startsWith(mappedPrefix)) {
+    return true;
   }
 
   return false;
@@ -72,10 +100,12 @@ function isPrivateIPv4(ip: string): boolean {
 }
 
 export function isValidSlug(code: string): boolean {
+  const normalizedCode = code.toLowerCase();
   return (
     SLUG_REGEX.test(code) &&
     code.length >= SLUG_MIN_LENGTH &&
-    code.length <= SLUG_MAX_LENGTH
+    code.length <= SLUG_MAX_LENGTH &&
+    !RESERVED_CODES.has(normalizedCode)
   );
 }
 
@@ -85,7 +115,7 @@ export function generateRandomSlug(length: number): string {
   let slug = "";
 
   for (let i = 0; i < length; i++) {
-    slug += chars[Math.floor(Math.random() * chars.length)];
+    slug += chars[randomInt(chars.length)];
   }
 
   return slug;
