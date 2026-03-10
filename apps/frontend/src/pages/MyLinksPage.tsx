@@ -18,6 +18,7 @@ import { Button } from "../components/ui/button";
 
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
+import { MyLinksPagination } from "../features/links/components/MyLinksPagination";
 
 const PAGE_SIZE = 10;
 
@@ -442,32 +443,14 @@ export function MyLinksPage() {
           </div>
         ) : null}
 
-        {(canGoPrevious || canGoNext) && (
-          <div className="mt-2 flex flex-col gap-3 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted-foreground">
-              {myLinksQuery.isFetching
-                ? "Loading…"
-                : `${rangeStart}–${rangeEnd} / ${totalCount}`}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={goToPreviousPage}
-                disabled={!canGoPrevious || myLinksQuery.isFetching}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                onClick={goToNextPage}
-                disabled={!canGoNext || myLinksQuery.isFetching}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+        <MyLinksPagination
+          canGoPrevious={canGoPrevious}
+          canGoNext={canGoNext}
+          isFetching={myLinksQuery.isFetching}
+          rangeLabel={`${rangeStart}–${rangeEnd} / ${totalCount}`}
+          onPrevious={goToPreviousPage}
+          onNext={goToNextPage}
+        />
       </div>
     </section>
   );
