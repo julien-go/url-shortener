@@ -41,7 +41,7 @@ export function HomeLanding() {
               ↓
             </p>
             <p className="mt-1 break-all font-mono text-[1.35rem] font-extrabold text-primary sm:text-[1.7rem]">
-              https://sho.rt/q4-launch
+              https://fliro.cc/q4-launch
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               128 clicks · Last click 3m ago
