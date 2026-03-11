@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - "apps/backend/**"
-      - "migrations/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - ".github/workflows/**"
@@ -12,7 +11,6 @@ on:
     branches: [main]
     paths:
       - "apps/backend/**"
-      - "migrations/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - ".github/workflows/**"
@@ -75,7 +73,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?sslmode=disable
       DBMATE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb?sslmode=disable
-      DBMATE_MIGRATIONS_DIR: ${{ github.workspace }}/migrations
+      DBMATE_MIGRATIONS_DIR: ${{ github.workspace }}/apps/backend/migrations
 
     steps:
       - name: Checkout
