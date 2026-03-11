@@ -193,11 +193,10 @@ export function MyLinksPage() {
                         href={link.shortLink}
                         target="_blank"
                         rel="noreferrer"
-                        aria-label={`${link.shortLink} (opens in a new tab)`}
+                        aria-label={`${link.shortLink}`}
                         className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
                       >
                         {link.shortLink}
-                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     </div>
 
@@ -209,11 +208,10 @@ export function MyLinksPage() {
                         href={link.originalUrl}
                         target="_blank"
                         rel="noreferrer"
-                        aria-label={`${link.originalUrl} (opens in a new tab)`}
+                        aria-label={`${link.originalUrl}`}
                         className="block break-all text-sm text-muted-foreground hover:text-foreground hover:underline"
                       >
                         {link.originalUrl}
-                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     </div>
 
@@ -333,14 +331,11 @@ export function MyLinksPage() {
                             href={link.shortLink}
                             target="_blank"
                             rel="noreferrer"
-                            aria-label={`${link.shortLink} (opens in a new tab)`}
-                            className="focus-premium block max-w-75 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition "
+                            aria-label={`${link.shortLink}`}
+                            className="focus-premium block max-w-60 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition "
                             title={link.shortLink}
                           >
                             {link.shortLink}
-                            <span className="sr-only">
-                              (opens in a new tab)
-                            </span>
                           </a>
                         </TableCell>
                         <TableCell className="px-4 py-3.5 align-top">
@@ -348,14 +343,11 @@ export function MyLinksPage() {
                             href={link.originalUrl}
                             target="_blank"
                             rel="noreferrer"
-                            aria-label={`${link.originalUrl} (opens in a new tab)`}
-                            className="block max-w-125 truncate text-sm text-muted-foreground hover:text-foreground hover:underline"
+                            aria-label={`${link.originalUrl}`}
+                            className="block max-w-50 truncate text-sm text-muted-foreground hover:text-foreground hover:underline"
                             title={link.originalUrl}
                           >
                             {link.originalUrl}
-                            <span className="sr-only">
-                              (opens in a new tab)
-                            </span>
                           </a>
                         </TableCell>
 

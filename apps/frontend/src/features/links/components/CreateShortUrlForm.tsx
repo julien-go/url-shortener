@@ -118,12 +118,11 @@ export function CreateShortUrlForm() {
               href={created.shortLink}
               target="_blank"
               rel="noreferrer"
-              aria-label={`${created.shortLink} (opens in a new tab)`}
+              aria-label={`${created.shortLink}`}
               className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary sm:truncate sm:break-normal"
               title={created.shortLink}
             >
               {created.shortLink}
-              <span className="sr-only"> (opens in a new tab)</span>
             </a>
 
             <div className="flex flex-wrap gap-2">
