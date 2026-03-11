@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { createFixedWindowRateLimit } from "./rateLimit";
 import { extractCookieValue } from "./authCookies";
+import { renderStatusPage } from "../http/statusPage";
 
 function getClientIp(req: Request): string {
   return req.ip || req.socket.remoteAddress || "unknown";
@@ -131,25 +132,18 @@ export const redirectRateLimit = createFixedWindowRateLimit({
       (secFetchDest === "document" || userAgent.includes("Mozilla"));
 
     if (isBrowserNavigation) {
-      res.status(429).type("text/html").send(`<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Too many requests</title>
-    <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; line-height: 1.5; }
-      .button { display: inline-block; margin-top: 1rem; padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #222; text-decoration: none; color: #111; }
-      .hint { color: #444; margin-top: 0.5rem; }
-    </style>
-  </head>
-  <body>
-    <h1>Too many requests</h1>
-    <p>You have reached the request limit for this short link. Please try again in ${retryAfterSeconds} second(s).</p>
-    <a class="button" href="${req.originalUrl}">Try again</a>
-    <p class="hint">Tip: wait a few seconds before retrying to avoid another limit response.</p>
-  </body>
-</html>`);
+      res
+        .status(429)
+        .type("html")
+        .send(
+          renderStatusPage({
+            title: "Too many requests • Fliro",
+            heading: "Too many requests",
+            message: `You have reached the request limit for this short link. Please try again in ${retryAfterSeconds} second(s).`,
+            actionHref: req.originalUrl,
+            actionLabel: "Try again",
+          }),
+        );
       return;
     }
 

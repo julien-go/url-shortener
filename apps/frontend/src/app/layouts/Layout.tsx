@@ -40,7 +40,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
             <div className="flex flex-col gap-2 sm:gap-2.5 md:flex-row md:flex-wrap md:items-center md:gap-4">
               <Link
                 to="/"
-                className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.14rem] font-bold text-foreground transition hover:text-primary"
+                className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.75rem] font-bold text-foreground transition hover:text-primary"
               >
                 Fliro
               </Link>
