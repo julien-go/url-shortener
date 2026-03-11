@@ -42,7 +42,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                 to="/"
                 className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.14rem] font-bold text-foreground transition hover:text-primary"
               >
-                URL Shortener
+                Fliro
               </Link>
 
               <Separator
