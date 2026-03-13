@@ -40,6 +40,14 @@ if (isProduction && !FRONTEND_ORIGIN) {
   throw new Error("FRONTEND_ORIGIN must be set in production");
 }
 
+const APP_NAME = process.env.APP_NAME;
+const APP_DASHBOARD_URL =
+  process.env.APP_DASHBOARD_URL ??
+  FRONTEND_ORIGIN ??
+  process.env.PUBLIC_BASE_URL ??
+  "http://localhost:5173";
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL;
+
 const METRICS_ENABLED = envBoolean("METRICS_ENABLED", !isProduction);
 const METRICS_API_KEY = process.env.METRICS_API_KEY;
 
@@ -51,6 +59,7 @@ export const env = {
   PORT: envNumber("PORT", 4000),
   FRONTEND_ORIGIN,
   FRONTEND_ORIGINS: EXTRA_FRONTEND_ORIGINS,
+  PUBLIC_BASE_URL,
   CORS_ALLOWED_ORIGINS,
   DATABASE_URL: process.env.DATABASE_URL,
   TRUST_PROXY: envNumber("TRUST_PROXY", 1),
@@ -73,6 +82,8 @@ export const env = {
   COOKIE_SECURE: envBoolean("COOKIE_SECURE", false),
   COOKIE_MAX_AGE_SECONDS: envNumber("COOKIE_MAX_AGE_SECONDS", 30 * 60),
   ENABLE_CSP: envBoolean("ENABLE_CSP", true),
+  APP_NAME,
+  APP_DASHBOARD_URL,
   METRICS_ENABLED,
   METRICS_API_KEY,
 };

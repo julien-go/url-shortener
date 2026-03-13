@@ -76,7 +76,7 @@ export async function findMyLinksPage(params: {
   const { userId, limit, cursor } = params;
 
   const pageSize = limit + 1;
-  const values: any[] = [userId, pageSize];
+  const values: Array<string | number> = [userId, pageSize];
   let cursorSql = "";
 
   if (cursor) {

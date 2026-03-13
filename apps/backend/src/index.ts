@@ -68,5 +68,5 @@ if (env.METRICS_ENABLED) {
 app.use("/", redirectRouter);
 
 app.listen(env.PORT, () => {
-  console.log(`✅ Backend GraphQL: http://localhost:${env.PORT}/graphql`);
+  console.log(`✅ Backend GraphQL: ${env.PUBLIC_BASE_URL}/graphql`);
 });

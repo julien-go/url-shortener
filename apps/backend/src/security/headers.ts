@@ -7,7 +7,7 @@ function buildCspValue() {
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      `connect-src 'self' ${env.FRONTEND_ORIGIN ?? "http://localhost:5173"}`,
+      `connect-src 'self' ${env.FRONTEND_ORIGIN}`,
       "img-src 'self' data:",
       "object-src 'none'",
       "frame-ancestors 'none'",

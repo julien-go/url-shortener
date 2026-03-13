@@ -1,3 +1,5 @@
+import { appConfig } from "../config/app";
+
 export function HomeLanding() {
   return (
     <section
@@ -35,13 +37,13 @@ export function HomeLanding() {
               example
             </p>
             <p className="mt-1 min-w-0 truncate text-sm text-muted-foreground/72">
-              https://docs.example.com/product/launch/roadmap/q4/campaign-overview-and-onboarding-checklist
+              https://example.com/a-long-example-link-that-could-be-shortened-to-make-sharing-easier
             </p>
             <p className="mt-1 text-base font-semibold leading-none text-foreground/85">
               ↓
             </p>
             <p className="mt-1 break-all font-mono text-[1.35rem] font-extrabold text-primary sm:text-[1.7rem]">
-              https://fliro.cc/q4-launch
+              {`${appConfig.siteUrl}/example`}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               128 clicks · Last click 3m ago
