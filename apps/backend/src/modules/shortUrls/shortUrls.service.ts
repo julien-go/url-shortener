@@ -34,12 +34,10 @@ export async function createShortUrl(
   const originalUrl = input.originalUrl?.trim();
   const customCode = input.code?.trim();
 
-  // 1) validation URL
   if (!originalUrl || !isValidHttpUrl(originalUrl)) {
     return { ok: false, reason: "INVALID_URL" };
   }
 
-  // 2) validation slug custom (si présent)
   if (customCode && !isValidSlug(customCode)) {
     return { ok: false, reason: "INVALID_CODE" };
   }
@@ -47,7 +45,6 @@ export async function createShortUrl(
   const publicBaseUrl = process.env.PUBLIC_BASE_URL;
   if (!publicBaseUrl) throw new Error("PUBLIC_BASE_URL is not set");
 
-  // 3) slug custom => tentative unique
   if (customCode) {
     try {
       const row = await createShortUrlRow({
@@ -69,7 +66,6 @@ export async function createShortUrl(
     }
   }
 
-  // 4) slug auto => retries
   for (let attempt = 0; attempt < MAX_SLUG_RETRIES; attempt++) {
     const code = generateRandomSlug(AUTO_SLUG_LENGTH);
 

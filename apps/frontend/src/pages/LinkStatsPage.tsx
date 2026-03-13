@@ -1,32 +1,16 @@
 import * as React from "react";
-import { Link, useParams, Navigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Separator } from "../components/ui/separator";
-
-import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
+import { useParams, Navigate } from "react-router-dom";
 import { useLinkStats } from "../features/links/hooks/useLinkStats";
 
-import { ClicksBarChart } from "../features/links/components/ClicksBarChart";
 import {
   getGraphQLErrorCode,
-  getGraphQLRequestErrorMessage,
   isGraphQLRequestError,
 } from "../features/links/hooks/errors";
 
-type StatsRange = "DAYS_7" | "DAYS_30";
-
-function formatSeriesDayLabel(dayUtc: string) {
-  const [year, month, day] = dayUtc.split("-");
-  if (!year || !month || !day) return dayUtc;
-  return `${day}/${month}`;
-}
-
-function formatLastClickedAt(value: string | null) {
-  if (!value) return "—";
-  const dateValue = new Date(value);
-  if (Number.isNaN(dateValue.getTime())) return value;
-  return dateValue.toLocaleString();
-}
+import { LinkStatsHeader } from "../features/links/components/stats/LinkStatsHeader";
+import { LinkDetailsSection } from "../features/links/components/stats/LinkDetailsSection";
+import { MetricsSummarySection } from "../features/links/components/stats/MetricsSummarySection";
+import { ClicksSection } from "../features/links/components/stats/ClicksSection";
 
 function shouldRedirectToLinks(error: unknown): boolean {
   if (!isGraphQLRequestError(error)) return false;
@@ -41,12 +25,13 @@ export function LinkStatsPage() {
   const params = useParams<{ id: string }>();
   const linkId = params.id ?? "";
 
-  const [range, setRange] = React.useState<StatsRange>("DAYS_7");
+  const [range, setRange] = React.useState<"DAYS_7" | "DAYS_30">("DAYS_7");
   const [copyStatus, setCopyStatus] = React.useState<
     "idle" | "copied" | "error"
   >("idle");
 
   const linkStatsQuery = useLinkStats(linkId, range);
+
   if (linkStatsQuery.isLoading || linkStatsQuery.isFetching) {
     return (
       <div
@@ -74,214 +59,36 @@ export function LinkStatsPage() {
     try {
       await navigator.clipboard.writeText(shortLink);
       setCopyStatus("copied");
-
-      window.setTimeout(() => {
-        setCopyStatus("idle");
-      }, 1200);
     } catch {
       setCopyStatus("error");
-
-      window.setTimeout(() => {
-        setCopyStatus("idle");
-      }, 1200);
     }
+    window.setTimeout(() => {
+      setCopyStatus("idle");
+    }, 1200);
   }
 
   return (
     <section className="space-y-5">
-      <div className="space-y-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-[2.15rem]">
-              Link statistics
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              <Link
-                to="/links"
-                className="underline decoration-primary/60 underline-offset-4 hover:text-foreground"
-              >
-                Back to my links
-              </Link>
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
-            <ToggleGroup
-              type="single"
-              value={range}
-              aria-label="Statistics period"
-              onValueChange={(rangeValue: string) => {
-                if (!rangeValue) return;
-                setRange(rangeValue as StatsRange);
-              }}
-            >
-              <ToggleGroupItem value="DAYS_7">7 days</ToggleGroupItem>
-              <ToggleGroupItem value="DAYS_30">30 days</ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-        </div>
-        <Separator className="bg-border/80" />
-      </div>
-
-      <section className="space-y-4 border-b border-border/70 pb-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold">Link</h2>
-
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleCopyShortLink}
-              disabled={!linkDetails?.shortLink}
-              aria-describedby="copy-link-status"
-            >
-              {copyStatus === "copied"
-                ? "Copied"
-                : copyStatus === "error"
-                  ? "Copy failed"
-                  : "Copy"}
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              disabled={!linkDetails?.shortLink}
-            >
-              <a
-                href={linkDetails?.shortLink ?? "#"}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open
-              </a>
-            </Button>
-            <span
-              id="copy-link-status"
-              role="status"
-              aria-live="polite"
-              className="sr-only"
-            >
-              {copyStatus === "copied"
-                ? "Short link copied to clipboard."
-                : copyStatus === "error"
-                  ? "Failed to copy short link."
-                  : ""}
-            </span>
-          </div>
-        </div>
-
-        {linkStatsQuery.error ? (
-          <div role="alert" className="text-sm text-muted-foreground">
-            {getGraphQLRequestErrorMessage(
-              linkStatsQuery.error,
-              "Unable to load link details.",
-            )}
-          </div>
-        ) : linkDetails ? (
-          <div className="grid gap-4 text-sm md:grid-cols-2">
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <div className="text-muted-foreground">Short link</div>
-                <div className="font-mono break-all">
-                  {linkDetails.shortLink}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="text-muted-foreground">Slug</div>
-                <div className="font-mono">{linkDetails.code}</div>
-              </div>
-            </div>
-
-            <div className="space-y-1 md:border-l md:border-border/70 md:pl-5">
-              <div className="text-muted-foreground">Target URL</div>
-              <div className="break-all">{linkDetails.originalUrl}</div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-sm text-muted-foreground">Link not found.</div>
-        )}
-      </section>
-
-      <section className="grid gap-4 border-b border-border/70 pb-5 md:grid-cols-2">
-        <div className="space-y-1">
-          <div className="text-sm text-muted-foreground">Total clicks</div>
-          <div className="text-3xl font-bold leading-tight">
-            {linkStats?.totalClicks ?? (linkStatsQuery.isLoading ? "…" : "—")}
-          </div>
-        </div>
-        <div className="space-y-1 md:border-l md:border-border/70 md:pl-5">
-          <div className="text-sm text-muted-foreground">Last click</div>
-          <div className="text-2xl font-semibold leading-tight md:text-[1.65rem]">
-            {linkStats
-              ? formatLastClickedAt(linkStats.lastClickedAt)
-              : linkStatsQuery.isLoading
-                ? "…"
-                : "—"}
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold">Clicks per day</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => linkStatsQuery.refetch()}
-            disabled={linkStatsQuery.isFetching}
-          >
-            Refresh
-          </Button>
-        </div>
-
-        {linkStatsQuery.error ? (
-          <div className="space-y-2">
-            <div role="alert" className="text-sm text-destructive">
-              Failed to load statistics.
-            </div>
-            <Button variant="outline" onClick={() => linkStatsQuery.refetch()}>
-              Retry
-            </Button>
-          </div>
-        ) : series.length === 0 ? (
-          <div className="text-sm text-muted-foreground">
-            No clicks yet. Share your link to get started.
-          </div>
-        ) : (
-          <>
-            <ClicksBarChart series={series} height={220} />
-
-            <div className="sr-only" aria-live="polite">
-              <p>
-                Daily clicks over the selected period ({series.length} days,
-                total {linkStats?.totalClicks ?? 0} clicks).
-              </p>
-              <table className="w-full caption-bottom text-sm">
-                <caption>Accessible data table for clicks per day.</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Day (UTC)</th>
-                    <th scope="col">Clicks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {series.map((seriesItem) => (
-                    <tr key={seriesItem.dayUtc}>
-                      <td>
-                        <span>{formatSeriesDayLabel(seriesItem.dayUtc)}</span>
-                        <span> ({seriesItem.dayUtc})</span>
-                      </td>
-                      <td>{seriesItem.clicks}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </section>
+      {" "}
+      <LinkStatsHeader range={range} onRangeChange={setRange} />
+      <LinkDetailsSection
+        linkDetails={linkDetails}
+        queryError={linkStatsQuery.error}
+        copyStatus={copyStatus}
+        onCopy={handleCopyShortLink}
+      />
+      <MetricsSummarySection
+        totalClicks={linkStats?.totalClicks}
+        lastClickedAt={linkStats?.lastClickedAt}
+        isLoading={linkStatsQuery.isLoading}
+      />
+      <ClicksSection
+        queryError={linkStatsQuery.error}
+        isFetching={linkStatsQuery.isFetching}
+        totalClicks={linkStats?.totalClicks}
+        series={series}
+        onRefresh={() => linkStatsQuery.refetch()}
+      />
     </section>
   );
 }

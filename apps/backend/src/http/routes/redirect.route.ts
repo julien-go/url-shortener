@@ -2,6 +2,7 @@ import { Router } from "express";
 import { resolveShortUrl } from "../../modules/shortUrls/shortUrls.service";
 import { redirectRateLimit } from "../../security/rateLimit.middleware";
 import { renderStatusPage } from "../statusPage";
+import { env } from "../../config/env";
 
 export const redirectRouter = Router();
 
@@ -30,11 +31,12 @@ redirectRouter.get("/:code", redirectRateLimit, async (req, res) => {
       .type("html")
       .send(
         renderStatusPage({
-          title: "Link gone • Fliro",
+          title: `Link gone • ${env.APP_NAME}`,
           heading: "This link is no longer available.",
           message: "The short link existed before, but it has been deleted.",
-          actionHref: "https://app.fliro.cc",
+          actionHref: env.APP_DASHBOARD_URL,
           actionLabel: "Open dashboard",
+          brandName: env.APP_NAME,
         }),
       );
   }
@@ -44,11 +46,12 @@ redirectRouter.get("/:code", redirectRateLimit, async (req, res) => {
     .type("html")
     .send(
       renderStatusPage({
-        title: "Link not found • Fliro",
+        title: `Link not found • ${env.APP_NAME}`,
         heading: "This short link does not exist.",
         message: "Check the URL and try again.",
-        actionHref: "https://app.fliro.cc",
+        actionHref: env.APP_DASHBOARD_URL,
         actionLabel: "Open dashboard",
+        brandName: env.APP_NAME,
       }),
     );
 });

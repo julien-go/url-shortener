@@ -6,6 +6,7 @@ import { useMe } from "../../features/auth/hooks/useMe";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Separator } from "../../components/ui/separator";
+import { appConfig } from "../../config/app";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -42,7 +43,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                 to="/"
                 className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.75rem] font-bold text-foreground transition hover:text-primary"
               >
-                Fliro
+                {appConfig.appName}
               </Link>
 
               <Separator

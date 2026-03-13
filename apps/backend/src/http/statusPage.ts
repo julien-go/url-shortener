@@ -1,16 +1,17 @@
-// src/http/statusPage.ts
 export function renderStatusPage({
   title,
   heading,
   message,
   actionHref,
   actionLabel,
+  brandName,
 }: {
   title: string;
   heading: string;
   message: string;
   actionHref?: string;
   actionLabel?: string;
+  brandName?: string;
 }) {
   const action =
     actionHref && actionLabel
@@ -76,7 +77,7 @@ export function renderStatusPage({
   </head>
   <body>
     <main class="card">
-      <div class="brand">Fliro</div>
+       <div class="brand">${brandName}</div>
       <h1>${heading}</h1>
       <p>${message}</p>
       ${action}
