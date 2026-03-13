@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { ApolloServer } from "@apollo/server";
+import { GraphQLError } from "graphql";
 import { expressMiddleware } from "@as-integrations/express5";
 import { env } from "./config/env";
 import { typeDefs } from "./graphql/schema";
@@ -15,6 +16,7 @@ import { securityHeadersMiddleware } from "./security/headers";
 import { getRateLimitMetricsSnapshot } from "./security/rateLimit";
 
 const app = express();
+const isProduction = env.NODE_ENV === "production";
 
 app.set("trust proxy", env.TRUST_PROXY);
 app.use(securityHeadersMiddleware);
@@ -35,7 +37,30 @@ app.use(
   createShortUrlRateLimit,
 );
 
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: !isProduction,
+  includeStacktraceInErrorResponses: !isProduction,
+  formatError: (formattedError, _error) => {
+    if (!isProduction) return formattedError;
+
+    const extensionCode = formattedError.extensions?.code;
+    const safeCode =
+      typeof extensionCode === "string" && extensionCode.length > 0
+        ? extensionCode
+        : "INTERNAL_SERVER_ERROR";
+
+    return new GraphQLError(
+      safeCode === "INTERNAL_SERVER_ERROR"
+        ? "Internal server error"
+        : formattedError.message,
+      {
+        extensions: { code: safeCode },
+      },
+    );
+  },
+});
 await server.start();
 
 app.use(
