@@ -1,6 +1,7 @@
 # Fliro — URL Shortener (Fullstack Portfolio Project)
 
-![CI](https://github.com/julien-go/url-shortener/actions/workflows/ci.yml/badge.svg)
+![Frontend CI](https://github.com/julien-go/url-shortener/actions/workflows/ci-frontend.yml/badge.svg)
+![Backend CI](https://github.com/julien-go/url-shortener/actions/workflows/ci-backend.yml/badge.svg)
 
 **Live App** [https://app.fliro.cc](https://app.fliro.cc)
 
@@ -115,7 +116,39 @@ Notes techniques :
 - relation utilisateur → liens,
 - table d’agrégats séparée pour éviter de recalculer l’historique au runtime.
 
-[diagramme BDD]
+```mermaid
+erDiagram
+  USERS ||--o{ SHORT_URLS : owns
+  SHORT_URLS ||--o{ DAILY_CLICKS : aggregates
+
+  USERS {
+    uuid id PK
+    text email UK
+    text password_hash
+    int token_version
+    timestamptz created_at
+  }
+
+  SHORT_URLS {
+    uuid id PK
+    uuid user_id FK
+    text code UK
+    text target_url
+    boolean is_active
+    bigint total_clicks
+    timestamptz last_clicked_at
+    timestamptz deleted_at
+    timestamptz created_at
+  }
+
+  DAILY_CLICKS {
+    uuid short_url_id FK
+    date day_utc PK
+    int clicks
+  }
+```
+
+Le backend persiste 3 tables : comptes (`users`), liens (`short_urls`) et agrégats journaliers (`daily_clicks`). La suppression d’un lien est logique (`deleted_at` + `is_active=false`), pas un DELETE physique.
 
 ## Flux de l’application
 
@@ -125,7 +158,37 @@ Notes techniques :
 2. Le backend valide l’entrée (Zod), puis crée l’enregistrement en base.
 3. Le front affiche le short link généré.
 
-[diagramme création]
+```mermaid
+sequenceDiagram
+  participant U as Utilisateur
+  participant FE as Frontend (React)
+  participant API as GraphQL Mutation createShortUrl
+  participant SVC as shortUrls.service
+  participant DB as PostgreSQL
+
+  U->>FE: Soumet originalUrl (+ code optionnel)
+  FE->>API: POST /graphql createShortUrl(input)
+  API->>API: Validation Zod + auth cookie
+  API->>SVC: createShortUrl(input, userId)
+  SVC->>SVC: Valide URL + slug (format + reserved codes)
+  alt slug invalide/réservé
+    SVC-->>API: INVALID_CODE
+    API-->>FE: BAD_USER_INPUT (Invalid slug)
+  else slug custom valide
+    SVC->>DB: INSERT short_urls(code, target_url, user_id)
+  else slug auto
+    loop jusqu'à slug unique
+      SVC->>SVC: generateRandomSlug()
+      SVC->>DB: INSERT short_urls(...)
+    end
+  end
+  DB-->>SVC: row créée
+  SVC-->>API: shortUrl + shortLink
+  API-->>FE: Payload GraphQL
+  FE-->>U: Affiche le lien court
+```
+
+La création passe toujours par `createShortUrl` côté GraphQL, puis par un service métier qui gère les validations métier et les collisions d’unicité du slug.
 
 ### Redirection
 
@@ -133,12 +196,40 @@ Notes techniques :
 2. Le backend résout le code, vérifie l’état du lien, puis redirige en 302.
 3. Le clic est tracké (compteur total + agrégat journalier).
 
-[diagramme redirection]
+```mermaid
+sequenceDiagram
+  participant B as Navigateur
+  participant R as Route GET /:code
+  participant SVC as resolveShortUrl
+  participant DB as PostgreSQL
+
+  B->>R: GET /:code
+  R->>SVC: resolveShortUrl(code, {track})
+  SVC->>DB: SELECT short_urls WHERE LOWER(code)=...
+  alt lien actif
+    SVC-->>R: ok + targetUrl
+    par tracking activé
+      SVC->>DB: UPSERT daily_clicks + UPDATE short_urls(total_clicks, last_clicked_at)
+    end
+    R-->>B: 302 Location: targetUrl
+  else lien supprimé
+    SVC-->>R: reason=DELETED
+    R-->>B: 410 page HTML
+  else introuvable/inactif
+    SVC-->>R: reason=NOT_FOUND/INACTIVE
+    R-->>B: 404 page HTML
+  end
+```
+
+La redirection est une route HTTP Express séparée de GraphQL.
+Le clic est enregistré en arrière-plan (sans bloquer la réponse 302).
+Le tracking est désactivé pour les requêtes spéculatives du navigateur
+(prefetch/prerender) afin d’éviter de compter des visites non réelles.
 
 ### Stats
 
-1. Le front interroge la query GraphQL `linkStats`.
-2. Le backend lit les agrégats et retourne série + total + dernière activité.
+Le frontend interroge la query GraphQL `linkStats`.
+Le backend lit les agrégats `daily_clicks` et retourne les clics par jour, le total de clics et la dernière activité.
 
 ## Sécurité
 
@@ -149,7 +240,7 @@ Notes techniques :
 - CORS par allowlist
 - Security headers (HSTS, CSP, etc.)
 
-## Notes production (courtes)
+## Notes production
 
 Le `.env.example` est pensé pour le local. En prod, il faut surtout vérifier :
 
