@@ -15,7 +15,7 @@ function hashForLogs(value: string): string {
 }
 
 function tryVerifyToken(token: string): { sub?: string } | null {
-  const secret = process.env.JWT_SECRET;
+  const secret = env.JWT_SECRET;
   if (!secret) return null;
 
   try {
