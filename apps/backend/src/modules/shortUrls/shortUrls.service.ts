@@ -3,6 +3,7 @@ import { ResolveShortUrlResult } from "./shortUrls.types";
 import { AUTO_SLUG_LENGTH, MAX_SLUG_RETRIES } from "./shortUrls.constants";
 import { CreateShortUrlInput, CreateShortUrlResult } from "./shortUrls.types";
 import { createShortUrlRow } from "./shortUrls.repo";
+import { env } from "../../config/env";
 import {
   isValidHttpUrl,
   isValidSlug,
@@ -42,7 +43,7 @@ export async function createShortUrl(
     return { ok: false, reason: "INVALID_CODE" };
   }
 
-  const publicBaseUrl = process.env.PUBLIC_BASE_URL;
+  const publicBaseUrl = env.PUBLIC_BASE_URL;
   if (!publicBaseUrl) throw new Error("PUBLIC_BASE_URL is not set");
 
   if (customCode) {

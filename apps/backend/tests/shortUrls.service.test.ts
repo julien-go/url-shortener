@@ -6,6 +6,9 @@ const repoMocks = vi.hoisted(() => ({
   trackClick: vi.fn(),
 }));
 vi.mock("../src/modules/shortUrls/shortUrls.repo", () => repoMocks);
+vi.mock("../src/config/env", () => ({
+  env: { PUBLIC_BASE_URL: "https://short.test" },
+}));
 
 import {
   createShortUrl,
@@ -16,7 +19,6 @@ import * as shortUrlsUtils from "../src/modules/shortUrls/shortUrls.utils";
 describe("shortUrls.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.PUBLIC_BASE_URL = "https://short.test";
   });
 
   describe("createShortUrl", () => {
