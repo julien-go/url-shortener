@@ -9,6 +9,7 @@ import { resolvers } from "./graphql/resolvers";
 import { redirectRouter } from "./http/routes/redirect.route";
 import { buildContext } from "./graphql/context";
 import {
+  authIpRateLimit,
   authRateLimit,
   createShortUrlRateLimit,
 } from "./security/rateLimit.middleware";
@@ -31,8 +32,11 @@ app.use(
       return callback(new Error("Origin not allowed by CORS"));
     },
     credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
   }),
   express.json({ limit: env.JSON_BODY_LIMIT }),
+  authIpRateLimit,
   authRateLimit,
   createShortUrlRateLimit,
 );

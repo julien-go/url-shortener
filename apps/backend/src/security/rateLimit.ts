@@ -45,12 +45,13 @@ function writeRateLimitHeaders(
     1,
     Math.ceil((options.resetAtMs - Date.now()) / 1000),
   );
+  const nextRemaining = Math.max(0, options.remaining);
+
+  const existing = res.getHeader("X-RateLimit-Remaining");
+  if (existing !== undefined && Number(existing) <= nextRemaining) return;
 
   res.setHeader("X-RateLimit-Limit", String(options.limit));
-  res.setHeader(
-    "X-RateLimit-Remaining",
-    String(Math.max(0, options.remaining)),
-  );
+  res.setHeader("X-RateLimit-Remaining", String(nextRemaining));
   res.setHeader("X-RateLimit-Reset", String(resetAfterSeconds));
   res.setHeader("RateLimit-Policy", `${options.limit};w=${resetAfterSeconds}`);
 }

@@ -106,6 +106,23 @@ type AuthBlockState = {
 };
 
 const authBlockByIdentity = new Map<string, AuthBlockState>();
+const AUTH_BLOCK_MAX_ENTRIES = 10_000;
+
+function ensureAuthBlockCapacity(now: number): void {
+  if (authBlockByIdentity.size < AUTH_BLOCK_MAX_ENTRIES) return;
+
+  for (const [identity, state] of authBlockByIdentity.entries()) {
+    if (state.blockedUntilMs <= now) {
+      authBlockByIdentity.delete(identity);
+    }
+  }
+
+  while (authBlockByIdentity.size >= AUTH_BLOCK_MAX_ENTRIES) {
+    const oldest = authBlockByIdentity.keys().next().value;
+    if (oldest === undefined) break;
+    authBlockByIdentity.delete(oldest);
+  }
+}
 
 function getAuthBackoffSeconds(strikes: number): number {
   const boundedStrike = Math.max(1, Math.min(strikes, 6));
@@ -162,6 +179,14 @@ export const createShortUrlRateLimit = createFixedWindowRateLimit({
   skip: (req) => !isCreateShortUrlOperation(req),
 });
 
+export const authIpRateLimit = createFixedWindowRateLimit({
+  name: "auth-ip",
+  windowMs: env.RL_AUTH_WINDOW_MS,
+  max: env.RL_AUTH_IP_MAX,
+  keyGenerator: (req) => `authip:${getClientIp(req)}`,
+  skip: (req) => !isAuthMutationOperation(req),
+});
+
 export const authRateLimit = createFixedWindowRateLimit({
   name: "auth",
   windowMs: env.RL_AUTH_WINDOW_MS,
@@ -171,6 +196,8 @@ export const authRateLimit = createFixedWindowRateLimit({
   onLimit: (req, res, retryAfterSeconds) => {
     const identity = createAuthIdentity(req);
     const now = Date.now();
+
+    ensureAuthBlockCapacity(now);
 
     const state = authBlockByIdentity.get(identity);
 

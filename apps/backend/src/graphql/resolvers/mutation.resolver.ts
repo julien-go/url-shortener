@@ -7,6 +7,7 @@ import {
   incrementUserTokenVersion,
 } from "../../modules/users/users.repo";
 import {
+  DUMMY_PASSWORD_HASH,
   hashPassword,
   signToken,
   verifyPassword,
@@ -135,12 +136,13 @@ export const mutationResolvers = {
     const { email, password } = parsed.data;
 
     const user = await findUserByEmail(email);
-    if (!user) {
-      badUserInput("Invalid credentials");
-    }
 
-    const ok = await verifyPassword(password, user.password_hash);
-    if (!ok) {
+    const ok = await verifyPassword(
+      password,
+      user?.password_hash ?? DUMMY_PASSWORD_HASH,
+    );
+
+    if (!user || !ok) {
       badUserInput("Invalid credentials");
     }
 

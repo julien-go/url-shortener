@@ -54,13 +54,14 @@ const schema = z
     RL_CREATE_MAX: numberFromEnv(10),
     RL_AUTH_WINDOW_MS: numberFromEnv(60_000),
     RL_AUTH_MAX: numberFromEnv(5),
+    RL_AUTH_IP_MAX: numberFromEnv(20),
     RL_AUTH_BLOCK_BASE_SECONDS: numberFromEnv(30),
     COOKIE_NAME: z.string().default("auth_token"),
     COOKIE_SAMESITE: z.enum(["Lax", "Strict", "None"]).default("Lax"),
     COOKIE_DOMAIN: z.string().optional(),
     COOKIE_PATH: z.string().default("/"),
     COOKIE_SECURE: booleanFromEnv(false),
-    COOKIE_MAX_AGE_SECONDS: numberFromEnv(30 * 60),
+    COOKIE_MAX_AGE_SECONDS: numberFromEnv(60 * 60 * 24 * 7),
     ENABLE_CSP: booleanFromEnv(true),
     APP_NAME: z.string().optional(),
     APP_DASHBOARD_URL: z.string().optional(),
@@ -91,6 +92,14 @@ const schema = z
         code: "custom",
         path: ["DATABASE_URL"],
         message: "DATABASE_URL must be set in production",
+      });
+    }
+
+    if (!value.PUBLIC_BASE_URL) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["PUBLIC_BASE_URL"],
+        message: "PUBLIC_BASE_URL must be set in production",
       });
     }
 
@@ -150,6 +159,7 @@ export const env = {
   RL_CREATE_MAX: config.RL_CREATE_MAX,
   RL_AUTH_WINDOW_MS: config.RL_AUTH_WINDOW_MS,
   RL_AUTH_MAX: config.RL_AUTH_MAX,
+  RL_AUTH_IP_MAX: config.RL_AUTH_IP_MAX,
   RL_AUTH_BLOCK_BASE_SECONDS: config.RL_AUTH_BLOCK_BASE_SECONDS,
   NODE_ENV,
   COOKIE_NAME: config.COOKIE_NAME,

@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 import { env } from "../../config/env";
 import { JwtPayload } from "./auth.types";
 
-const JWT_EXPIRES_IN = "15m";
+const JWT_ALGORITHM = "HS256" as const;
+
+export const DUMMY_PASSWORD_HASH =
+  "$2b$10$YO/7w00jcPITZ.kMOOmS6.vtqeisl2P2jOQLKrO49AVNernil/BWW";
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -23,12 +26,17 @@ export function getJwtSecret(): string {
 }
 
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getJwtSecret(), {
+    algorithm: JWT_ALGORITHM,
+    expiresIn: env.COOKIE_MAX_AGE_SECONDS,
+  });
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    return jwt.verify(token, getJwtSecret()) as JwtPayload;
+    return jwt.verify(token, getJwtSecret(), {
+      algorithms: [JWT_ALGORITHM],
+    }) as JwtPayload;
   } catch {
     return null;
   }
