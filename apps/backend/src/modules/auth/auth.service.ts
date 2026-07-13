@@ -1,13 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { env } from "../../config/env";
 import { JwtPayload } from "./auth.types";
 
-const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = "15m";
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not set");
-}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -21,7 +17,7 @@ export async function verifyPassword(
 }
 
 export function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
+  const secret = env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is not set");
   return secret;
 }
