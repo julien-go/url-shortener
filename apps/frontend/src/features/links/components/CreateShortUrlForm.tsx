@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useCreateShortUrl } from "../hooks/useCreateShortUrl";
 import { getCreateShortUrlErrorMessage } from "../hooks/errors";
+import { useCopyToClipboard } from "../../../lib/hooks/useCopyToClipboard";
 
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -10,7 +11,7 @@ import { Separator } from "../../../components/ui/separator";
 export function CreateShortUrlForm() {
   const [originalUrl, setOriginalUrl] = React.useState("");
   const [code, setCode] = React.useState("");
-  const [copyMessage, setCopyMessage] = React.useState<string | null>(null);
+  const { status: copyStatus, copy } = useCopyToClipboard();
 
   const createShortUrlMutation = useCreateShortUrl();
 
@@ -21,23 +22,25 @@ export function CreateShortUrlForm() {
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    createShortUrlMutation.mutate({
-      originalUrl,
-      code: code.trim() || undefined,
-    });
+    createShortUrlMutation.mutate(
+      {
+        originalUrl,
+        code: code.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          setOriginalUrl("");
+          setCode("");
+        },
+      },
+    );
   }
 
   const created = createShortUrlMutation.data?.createShortUrl;
 
   const copyCreatedLink = async () => {
     if (!created?.shortLink) return;
-    try {
-      await navigator.clipboard.writeText(created.shortLink);
-      setCopyMessage("Copied to clipboard.");
-    } catch {
-      setCopyMessage("Copy failed. Please copy manually.");
-    }
-    window.setTimeout(() => setCopyMessage(null), 2000);
+    await copy(created.shortLink);
   };
 
   return (
@@ -135,13 +138,15 @@ export function CreateShortUrlForm() {
                 </a>
               </Button>
             </div>
-            {copyMessage ? (
+            {copyStatus !== "idle" ? (
               <p
                 role="status"
                 aria-live="polite"
                 className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90"
               >
-                {copyMessage}
+                {copyStatus === "copied"
+                  ? "Copied to clipboard."
+                  : "Copy failed. Please copy manually."}
               </p>
             ) : null}
           </div>

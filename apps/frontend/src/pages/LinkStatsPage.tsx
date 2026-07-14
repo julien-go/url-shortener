@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useLinkStats } from "../features/links/hooks/useLinkStats";
+import { useCopyToClipboard } from "../lib/hooks/useCopyToClipboard";
 
 import {
   getGraphQLErrorCode,
@@ -26,13 +27,11 @@ export function LinkStatsPage() {
   const linkId = params.id ?? "";
 
   const [range, setRange] = React.useState<"DAYS_7" | "DAYS_30">("DAYS_7");
-  const [copyStatus, setCopyStatus] = React.useState<
-    "idle" | "copied" | "error"
-  >("idle");
+  const { status: copyStatus, copy } = useCopyToClipboard(1200);
 
   const linkStatsQuery = useLinkStats(linkId, range);
 
-  if (linkStatsQuery.isLoading || linkStatsQuery.isFetching) {
+  if (linkStatsQuery.isLoading) {
     return (
       <div
         role="status"
@@ -55,16 +54,7 @@ export function LinkStatsPage() {
   async function handleCopyShortLink() {
     const shortLink = linkDetails?.shortLink;
     if (!shortLink) return;
-
-    try {
-      await navigator.clipboard.writeText(shortLink);
-      setCopyStatus("copied");
-    } catch {
-      setCopyStatus("error");
-    }
-    window.setTimeout(() => {
-      setCopyStatus("idle");
-    }, 1200);
+    await copy(shortLink);
   }
 
   return (
