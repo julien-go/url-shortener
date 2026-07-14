@@ -234,19 +234,30 @@ Le backend lit les agrégats `daily_clicks` et retourne les clics par jour, le t
 ## Sécurité
 
 - Validation d’entrée avec Zod
-- Authentification JWT en cookie HttpOnly
+- Authentification JWT (HS256) en cookie HttpOnly
 - Invalidation de session via `token_version`
+- Register résistant à l’énumération de comptes (message générique, timing constant)
 - Rate limiting sur endpoints sensibles (auth, création, redirection)
 - CORS par allowlist
-- Security headers (HSTS, CSP, etc.)
+- Security headers : HSTS, CSP, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, Cross-Origin-Opener-Policy (COOP), Cross-Origin-Resource-Policy (CORP)
+
+## Observabilité
+
+- Logging structuré via [pino](https://github.com/pinojs/pino) (JSON en prod, sortie lisible en dev via `LOG_PRETTY=true`)
+- Niveau de log configurable avec `LOG_LEVEL`
+- Erreurs internes GraphQL loggées côté serveur (masquées côté client), avec redaction des champs sensibles
+- `GET /healthz` : health check
+- `GET /metrics` : métriques de rate limiting (protégé par `METRICS_API_KEY`, désactivable via `METRICS_ENABLED`)
 
 ## Notes production
 
 Le `.env.example` est pensé pour le local. En prod, il faut surtout vérifier :
 
+- `NODE_ENV=production`
 - `COOKIE_SECURE=true`
 - origins CORS correctes
 - `JWT_SECRET` fort
 - `PUBLIC_BASE_URL` aligné avec le domaine public
+- `LOG_PRETTY` laissé à `false` (le pretty-printer `pino-pretty` est une dépendance de dev)
 
 ---
