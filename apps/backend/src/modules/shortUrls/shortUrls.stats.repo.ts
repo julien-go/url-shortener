@@ -57,8 +57,7 @@ export async function findLinkStats(params: {
       code: firstRow.code,
       originalUrl: firstRow.target_url,
       createdAt: firstRow.created_at,
-      clickCount: Number(firstRow.total_clicks ?? 0),
-      // shortLink sera résolu par ShortUrl.shortLink (field resolver)
+      clickCount: String(firstRow.total_clicks ?? 0),
     },
     series: rows.map((row) => ({ dayUtc: row.day_utc, clicks: row.clicks })),
   };

@@ -46,7 +46,7 @@ export type MyLinkRow = {
   code: string;
   target_url: string;
   created_at: string;
-  total_clicks: number;
+  total_clicks: string;
 };
 
 export type StatsRange = "DAYS_7" | "DAYS_30";
@@ -71,7 +71,7 @@ export type LinkStats = {
     code: string;
     originalUrl: string;
     createdAt: string;
-    clickCount: number;
+    clickCount: string;
   };
   series: { dayUtc: string; clicks: number }[];
 };

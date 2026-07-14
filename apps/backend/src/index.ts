@@ -15,6 +15,7 @@ import {
 } from "./security/rateLimit.middleware";
 import { securityHeadersMiddleware } from "./security/headers";
 import { getRateLimitMetricsSnapshot } from "./security/rateLimit";
+import { logger } from "./utils/logger";
 
 const app = express();
 const isProduction = env.NODE_ENV === "production";
@@ -46,14 +47,18 @@ const server = new ApolloServer({
   resolvers,
   introspection: !isProduction,
   includeStacktraceInErrorResponses: !isProduction,
-  formatError: (formattedError, _error) => {
-    if (!isProduction) return formattedError;
-
+  formatError: (formattedError, error) => {
     const extensionCode = formattedError.extensions?.code;
     const safeCode =
       typeof extensionCode === "string" && extensionCode.length > 0
         ? extensionCode
         : "INTERNAL_SERVER_ERROR";
+
+    if (safeCode === "INTERNAL_SERVER_ERROR") {
+      logger.error({ err: error }, "GraphQL internal error");
+    }
+
+    if (!isProduction) return formattedError;
 
     return new GraphQLError(
       safeCode === "INTERNAL_SERVER_ERROR"
@@ -97,5 +102,8 @@ if (env.METRICS_ENABLED) {
 app.use("/", redirectRouter);
 
 app.listen(env.PORT, () => {
-  console.log(`✅ Backend GraphQL: ${env.PUBLIC_BASE_URL}/graphql`);
+  logger.info(
+    { url: `${env.PUBLIC_BASE_URL}/graphql` },
+    "Backend GraphQL ready",
+  );
 });

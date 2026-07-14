@@ -65,7 +65,7 @@ export const mutationResolvers = {
           code: result.shortUrl.code,
           originalUrl: result.shortUrl.target_url,
           createdAt: result.shortUrl.created_at,
-          clickCount: 0,
+          clickCount: "0",
           shortLink: result.shortLink,
         },
         shortLink: result.shortLink,
@@ -88,13 +88,6 @@ export const mutationResolvers = {
 
     const { email, password } = parsed.data;
 
-    const existing = await findUserByEmail(email);
-    if (existing) {
-      throw new GraphQLError("Email already in use", {
-        extensions: { code: "BAD_USER_INPUT", reason: "EMAIL_TAKEN" },
-      });
-    }
-
     try {
       const passwordHash = await hashPassword(password);
       const user = await createUser(email, passwordHash);
@@ -114,8 +107,8 @@ export const mutationResolvers = {
       };
     } catch (error) {
       if (isPgUniqueViolation(error) && error.code === "23505") {
-        throw new GraphQLError("Email already in use", {
-          extensions: { code: "BAD_USER_INPUT", reason: "EMAIL_TAKEN" },
+        throw new GraphQLError("Registration failed", {
+          extensions: { code: "BAD_USER_INPUT", reason: "REGISTRATION_FAILED" },
         });
       }
 

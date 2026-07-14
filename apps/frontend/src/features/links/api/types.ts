@@ -20,7 +20,7 @@ export type MyLink = {
   code: string;
   originalUrl: string;
   createdAt: string;
-  clickCount: number;
+  clickCount: string;
   shortLink: string;
 };
 
@@ -54,7 +54,7 @@ export type LinkStatsResponse = {
       code: string;
       originalUrl: string;
       createdAt: string;
-      clickCount: number;
+      clickCount: string;
       shortLink: string;
     };
   };

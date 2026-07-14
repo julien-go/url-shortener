@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Request, RequestHandler, Response } from "express";
+import { logger } from "../utils/logger";
 
 type Bucket = {
   count: number;
@@ -122,16 +123,18 @@ export function createFixedWindowRateLimit(
 
       trackBlocked(name);
 
-      console.warn("[rate-limit] blocked", {
-        limiter: name,
-        route: req.originalUrl,
-        method: req.method,
-        keyHash: hashForLogs(key),
-        ip: req.ip,
-        userAgent: req.headers["user-agent"],
-        retryAfterSeconds,
-        at: new Date().toISOString(),
-      });
+      logger.warn(
+        {
+          limiter: name,
+          route: req.originalUrl,
+          method: req.method,
+          keyHash: hashForLogs(key),
+          ip: req.ip,
+          userAgent: req.headers["user-agent"],
+          retryAfterSeconds,
+        },
+        "rate-limit blocked",
+      );
 
       if (onLimit) {
         onLimit(req, res, retryAfterSeconds);

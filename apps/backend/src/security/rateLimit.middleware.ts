@@ -5,6 +5,7 @@ import { env } from "../config/env";
 import { createFixedWindowRateLimit } from "./rateLimit";
 import { extractCookieValue } from "./authCookies";
 import { renderStatusPage } from "../http/statusPage";
+import { logger } from "../utils/logger";
 
 function getClientIp(req: Request): string {
   return req.ip || req.socket.remoteAddress || "unknown";
@@ -223,16 +224,18 @@ export const authRateLimit = createFixedWindowRateLimit({
       blockedUntilMs: now + backoffSeconds * 1000,
     });
 
-    console.warn("[rate-limit] auth blocked", {
-      limiter: "auth",
-      route: req.originalUrl,
-      method: req.method,
-      ipHash: hashForLogs(getClientIp(req)),
-      emailHash: hashForLogs(extractAuthEmail(req) ?? "unknown-email"),
-      strikes: nextStrikes,
-      backoffSeconds,
-      at: new Date().toISOString(),
-    });
+    logger.warn(
+      {
+        limiter: "auth",
+        route: req.originalUrl,
+        method: req.method,
+        ipHash: hashForLogs(getClientIp(req)),
+        emailHash: hashForLogs(extractAuthEmail(req) ?? "unknown-email"),
+        strikes: nextStrikes,
+        backoffSeconds,
+      },
+      "rate-limit auth blocked",
+    );
 
     const finalRetryAfter = Math.max(retryAfterSeconds, backoffSeconds);
     res.setHeader("Retry-After", String(finalRetryAfter));

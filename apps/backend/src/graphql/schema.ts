@@ -26,7 +26,7 @@ type ShortUrl {
   code: String!
   originalUrl: String!
   createdAt: DateTime!
-  clickCount: Int!
+  clickCount: String!
   shortLink: String!
 }
 
