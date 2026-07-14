@@ -67,6 +67,10 @@ const schema = z
     APP_DASHBOARD_URL: z.string().optional(),
     METRICS_ENABLED: booleanFromEnv(!isProduction),
     METRICS_API_KEY: z.string().optional(),
+    LOG_LEVEL: z
+      .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+      .default(isProduction ? "info" : "debug"),
+    LOG_PRETTY: booleanFromEnv(false),
   })
   .superRefine((value, ctx) => {
     if (value.COOKIE_SAMESITE === "None" && !value.COOKIE_SECURE) {
@@ -173,4 +177,6 @@ export const env = {
   APP_DASHBOARD_URL,
   METRICS_ENABLED: config.METRICS_ENABLED,
   METRICS_API_KEY: config.METRICS_API_KEY,
+  LOG_LEVEL: config.LOG_LEVEL,
+  LOG_PRETTY: config.LOG_PRETTY,
 };

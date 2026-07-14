@@ -7,7 +7,11 @@ const repoMocks = vi.hoisted(() => ({
 }));
 vi.mock("../src/modules/shortUrls/shortUrls.repo", () => repoMocks);
 vi.mock("../src/config/env", () => ({
-  env: { PUBLIC_BASE_URL: "https://short.test" },
+  env: {
+    PUBLIC_BASE_URL: "https://short.test",
+    NODE_ENV: "test",
+    LOG_LEVEL: "silent",
+  },
 }));
 
 import {

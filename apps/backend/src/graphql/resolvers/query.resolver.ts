@@ -64,7 +64,7 @@ export const queryResolvers = {
       code: r.code,
       originalUrl: r.target_url,
       createdAt: r.created_at,
-      clickCount: r.total_clicks ?? 0,
+      clickCount: String(r.total_clicks ?? 0),
     }));
 
     const hasNextPage = rows.length > limit;
