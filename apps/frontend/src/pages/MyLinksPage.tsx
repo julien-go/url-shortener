@@ -1,103 +1,58 @@
 import * as React from "react";
-import { Copy, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getGraphQLRequestErrorMessage } from "../features/links/hooks/errors";
 import { useMyLinks } from "../features/links/hooks/useMyLinks";
 import { useDeleteLink } from "../features/links/hooks/useDeleteLink";
+import { useCursorPagination } from "../features/links/hooks/useCursorPagination";
+import { useCopyToClipboard } from "../lib/hooks/useCopyToClipboard";
 
 import {
   Table,
   TableBody,
   TableCaption,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "../components/ui/table";
 import { Button } from "../components/ui/button";
-
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
 import { MyLinksPagination } from "../features/links/components/MyLinksPagination";
+import { LinkCard } from "../features/links/components/LinkCard";
+import { LinkRow } from "../features/links/components/LinkRow";
 
 const PAGE_SIZE = 10;
 
-function formatDateLabel(value: string) {
-  return new Date(value).toLocaleDateString();
-}
-
 export function MyLinksPage() {
   const navigate = useNavigate();
-
-  const [cursorStack, setCursorStack] = React.useState<(string | null)[]>([
-    null,
-  ]);
+  const pagination = useCursorPagination();
+  const { status: copyStatus, copy } = useCopyToClipboard();
 
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(
     null,
   );
-  const [copyMessage, setCopyMessage] = React.useState<string | null>(null);
 
-  const currentCursor = cursorStack[cursorStack.length - 1];
-
-  const myLinksQuery = useMyLinks(PAGE_SIZE, currentCursor, true);
+  const myLinksQuery = useMyLinks(PAGE_SIZE, pagination.currentCursor, true);
   const deleteLinkMutation = useDeleteLink();
 
   const myLinksPage = myLinksQuery.data?.myLinks;
-  const rawLinks = React.useMemo(
-    () => myLinksPage?.items ?? [],
-    [myLinksPage?.items],
-  );
-
   const links = myLinksPage?.items ?? [];
 
-  const canGoPrevious = cursorStack.length > 1;
   const canGoNext = Boolean(myLinksPage?.nextCursor);
   const totalCount = myLinksPage?.totalCount ?? 0;
-  const currentPage = cursorStack.length;
-  const rangeStart = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeStart =
+    totalCount === 0 ? 0 : (pagination.page - 1) * PAGE_SIZE + 1;
   const rangeEnd =
     totalCount === 0
       ? 0
-      : Math.min((currentPage - 1) * PAGE_SIZE + rawLinks.length, totalCount);
-
-  const goToNextPage = () => {
-    if (!myLinksPage?.nextCursor) return;
-    setCursorStack((previousStack) => [
-      ...previousStack,
-      myLinksPage.nextCursor,
-    ]);
-  };
-
-  const goToPreviousPage = () => {
-    if (!canGoPrevious) return;
-    setCursorStack((previousStack) => previousStack.slice(0, -1));
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyMessage("Copied to clipboard.");
-    } catch {
-      setCopyMessage("Copy failed. Please copy manually.");
-    }
-    window.setTimeout(() => setCopyMessage(null), 2000);
-  };
-
-  const startDeleteConfirmation = (linkId: string) => {
-    setPendingDeleteId(linkId);
-  };
-
-  const cancelDeleteConfirmation = () => {
-    setPendingDeleteId(null);
-  };
+      : Math.min((pagination.page - 1) * PAGE_SIZE + links.length, totalCount);
 
   const confirmDeleteLink = (linkId: string) => {
     setDeletingId(linkId);
     deleteLinkMutation.mutate(linkId, {
       onSuccess: () => {
-        setCursorStack([null]);
+        pagination.reset();
         setPendingDeleteId(null);
       },
       onSettled: () => setDeletingId(null),
@@ -107,6 +62,16 @@ export function MyLinksPage() {
   const errorMessage = myLinksQuery.error
     ? getGraphQLRequestErrorMessage(myLinksQuery.error, "Failed to load links.")
     : null;
+
+  const rowProps = (linkId: string) => ({
+    isConfirmingDelete: pendingDeleteId === linkId,
+    isDeleting: deleteLinkMutation.isPending && deletingId === linkId,
+    onStats: (id: string) => navigate(`/links/${id}/stats`),
+    onCopy: (shortLink: string) => void copy(shortLink),
+    onStartDelete: (id: string) => setPendingDeleteId(id),
+    onCancelDelete: () => setPendingDeleteId(null),
+    onConfirmDelete: confirmDeleteLink,
+  });
 
   return (
     <section className="space-y-7">
@@ -168,121 +133,14 @@ export function MyLinksPage() {
           </div>
         ) : links.length === 0 ? (
           <div className="rounded-lg border border-border/80 bg-muted/35 p-6 text-sm text-muted-foreground">
-            {rawLinks.length === 0
-              ? "No links yet."
-              : "No result for the current search."}
+            No links yet.
           </div>
         ) : (
           <>
             <div className="space-y-3 md:hidden">
-              {links.map((link) => {
-                const isConfirmingDelete = pendingDeleteId === link.id;
-                const isDeletingThisRow =
-                  deleteLinkMutation.isPending && deletingId === link.id;
-
-                return (
-                  <article
-                    key={link.id}
-                    className="space-y-3 rounded-lg border border-border/80 bg-background p-4"
-                  >
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                        Short link
-                      </p>
-                      <a
-                        href={link.shortLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`${link.shortLink}`}
-                        className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
-                      >
-                        {link.shortLink}
-                      </a>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                        Target URL
-                      </p>
-                      <a
-                        href={link.originalUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`${link.originalUrl}`}
-                        className="block break-all text-sm text-muted-foreground hover:text-foreground hover:underline"
-                      >
-                        {link.originalUrl}
-                      </a>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Clicks</p>
-                        <p className="font-semibold tabular-nums">
-                          {link.clickCount}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Created</p>
-                        <p className="font-medium text-foreground/90">
-                          {formatDateLabel(link.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => navigate(`/links/${link.id}/stats`)}
-                      >
-                        Statistics
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyToClipboard(link.shortLink)}
-                      >
-                        Copy
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="col-span-2 text-destructive/85 hover:text-destructive"
-                        onClick={() => startDeleteConfirmation(link.id)}
-                        disabled={isDeletingThisRow}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-
-                    {isConfirmingDelete ? (
-                      <div className="space-y-2 rounded-md border border-destructive/25 bg-destructive/8 p-2.5 text-xs">
-                        <span className="text-destructive/90">
-                          Delete this link?
-                        </span>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={cancelDeleteConfirmation}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => confirmDeleteLink(link.id)}
-                            disabled={isDeletingThisRow}
-                          >
-                            {isDeletingThisRow ? "Deleting…" : "Confirm"}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </article>
-                );
-              })}
+              {links.map((link) => (
+                <LinkCard key={link.id} link={link} {...rowProps(link.id)} />
+              ))}
             </div>
 
             <div className="hidden overflow-hidden rounded-lg bg-background/35 md:block">
@@ -312,136 +170,38 @@ export function MyLinksPage() {
                 </TableHeader>
 
                 <TableBody>
-                  {links.map((link, index) => {
-                    const isConfirmingDelete = pendingDeleteId === link.id;
-                    const isDeletingThisRow =
-                      deleteLinkMutation.isPending && deletingId === link.id;
-
-                    return (
-                      <TableRow
-                        key={link.id}
-                        className={
-                          index % 2 === 0
-                            ? "bg-background/10 hover:bg-muted/75"
-                            : "bg-primary/4 hover:bg-primary/10"
-                        }
-                      >
-                        <TableCell className="px-4 py-3.5 align-top">
-                          <a
-                            href={link.shortLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={`${link.shortLink}`}
-                            className="focus-premium block max-w-60 truncate rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition "
-                            title={link.shortLink}
-                          >
-                            {link.shortLink}
-                          </a>
-                        </TableCell>
-                        <TableCell className="px-4 py-3.5 align-top">
-                          <a
-                            href={link.originalUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={`${link.originalUrl}`}
-                            className="block max-w-50 truncate text-sm text-muted-foreground hover:text-foreground hover:underline"
-                            title={link.originalUrl}
-                          >
-                            {link.originalUrl}
-                          </a>
-                        </TableCell>
-
-                        <TableCell className="px-4 py-3.5 text-right tabular-nums align-top">
-                          {link.clickCount}
-                        </TableCell>
-
-                        <TableCell className="px-4 py-3.5 text-sm text-muted-foreground align-top">
-                          {formatDateLabel(link.createdAt)}
-                        </TableCell>
-
-                        <TableCell className="px-4 py-3.5 align-top">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() =>
-                                navigate(`/links/${link.id}/stats`)
-                              }
-                              aria-label={`View statistics for ${link.code}`}
-                            >
-                              Statistics
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                              onClick={() => copyToClipboard(link.shortLink)}
-                              aria-label={`Copy short link ${link.code}`}
-                            >
-                              <Copy className="size-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="px-2.5 text-destructive/85 hover:text-destructive"
-                              onClick={() => startDeleteConfirmation(link.id)}
-                              disabled={isDeletingThisRow}
-                              aria-label={`Delete short link ${link.code}`}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-
-                          {isConfirmingDelete ? (
-                            <div className="mt-2 flex justify-end">
-                              <div className="ml-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-md border border-destructive/25 bg-destructive/8 px-2.5 py-2 text-xs">
-                                <span className="text-destructive/90">
-                                  Delete this link?
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={cancelDeleteConfirmation}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => confirmDeleteLink(link.id)}
-                                  disabled={isDeletingThisRow}
-                                >
-                                  {isDeletingThisRow ? "Deleting…" : "Confirm"}
-                                </Button>
-                              </div>
-                            </div>
-                          ) : null}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {links.map((link, index) => (
+                    <LinkRow
+                      key={link.id}
+                      link={link}
+                      index={index}
+                      {...rowProps(link.id)}
+                    />
+                  ))}
                 </TableBody>
               </Table>
             </div>
           </>
         )}
-        {copyMessage ? (
+        {copyStatus !== "idle" ? (
           <div
             role="status"
             aria-live="polite"
             className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90"
           >
-            {copyMessage}
+            {copyStatus === "copied"
+              ? "Copied to clipboard."
+              : "Copy failed. Please copy manually."}
           </div>
         ) : null}
 
         <MyLinksPagination
-          canGoPrevious={canGoPrevious}
+          canGoPrevious={pagination.canGoPrevious}
           canGoNext={canGoNext}
           isFetching={myLinksQuery.isFetching}
           rangeLabel={`${rangeStart}–${rangeEnd} / ${totalCount}`}
-          onPrevious={goToPreviousPage}
-          onNext={goToNextPage}
+          onPrevious={pagination.goToPrevious}
+          onNext={() => pagination.goToNext(myLinksPage?.nextCursor)}
         />
       </div>
     </section>
