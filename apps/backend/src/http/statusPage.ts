@@ -1,30 +1,4 @@
-export function renderStatusPage({
-  title,
-  heading,
-  message,
-  actionHref,
-  actionLabel,
-  brandName,
-}: {
-  title: string;
-  heading: string;
-  message: string;
-  actionHref?: string;
-  actionLabel?: string;
-  brandName?: string;
-}) {
-  const action =
-    actionHref && actionLabel
-      ? `<a href="${actionHref}">${actionLabel}</a>`
-      : "";
-
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${title}</title>
-    <style>
+const STATUS_PAGE_STYLES = `
       body {
         margin: 0;
         padding: 24px;
@@ -73,7 +47,35 @@ export function renderStatusPage({
         text-decoration: none;
         font-weight: 600;
       }
-    </style>
+    `;
+
+export function renderStatusPage({
+  title,
+  heading,
+  message,
+  actionHref,
+  actionLabel,
+  brandName,
+}: {
+  title: string;
+  heading: string;
+  message: string;
+  actionHref?: string;
+  actionLabel?: string;
+  brandName?: string;
+}) {
+  const action =
+    actionHref && actionLabel
+      ? `<a href="${actionHref}">${actionLabel}</a>`
+      : "";
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+    <style>${STATUS_PAGE_STYLES}</style>
   </head>
   <body>
     <main class="card">

@@ -234,19 +234,59 @@ Le backend lit les agrégats `daily_clicks` et retourne les clics par jour, le t
 ## Sécurité
 
 - Validation d’entrée avec Zod
-- Authentification JWT en cookie HttpOnly
+- Authentification JWT (HS256) en cookie HttpOnly
 - Invalidation de session via `token_version`
+- Register résistant à l’énumération de comptes (message générique, timing constant)
 - Rate limiting sur endpoints sensibles (auth, création, redirection)
 - CORS par allowlist
-- Security headers (HSTS, CSP, etc.)
+- Security headers : HSTS, CSP, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, Cross-Origin-Opener-Policy (COOP), Cross-Origin-Resource-Policy (CORP)
+
+## Observabilité
+
+- Logging structuré via [pino](https://github.com/pinojs/pino) (JSON en prod, sortie lisible en dev via `LOG_PRETTY=true`)
+- Niveau de log configurable avec `LOG_LEVEL`
+- Erreurs internes GraphQL loggées côté serveur (masquées côté client), avec redaction des champs sensibles
+- `GET /healthz` : health check
+- `GET /metrics` : métriques de rate limiting (protégé par `METRICS_API_KEY`, désactivable via `METRICS_ENABLED`)
+
+## Déploiement
+
+### Frontend (Netlify)
+
+- Build command : `pnpm --filter ./apps/frontend build`
+- Publish directory : `apps/frontend/dist`
+- Variables d'environnement à configurer dans Netlify (Site settings → Environment variables) : `VITE_API_URL`, `VITE_APP_NAME`, `VITE_SITE_URL`
+- Le fallback SPA est géré par `apps/frontend/netlify.toml` (`/* → /index.html`)
+- Déploiement déclenché automatiquement à chaque push sur `main` (intégration Git Netlify)
+
+### Backend + DB (Railway)
+
+- Start command : `pnpm --filter ./apps/backend start` (lance `tsx src/index.ts`)
+- Variables d'environnement à configurer dans Railway : toutes celles listées dans `apps/backend/.env.example`, avec des valeurs de prod (voir "Notes production" ci-dessous)
+- Migrations : à appliquer après chaque déploiement qui change le schéma, via `pnpm --filter ./apps/backend db:migrate:prod` (utilise directement `DATABASE_URL`/`DBMATE_DATABASE_URL`, sans passer par un `.env` local)
+- Rollback d'une migration : `pnpm --filter ./apps/backend db:rollback:prod` (équivalent `dbmate down`, utilise directement `DATABASE_URL`/`DBMATE_DATABASE_URL` comme `db:migrate:prod`, sans passer par un `.env` local). `db:rollback` (sans `:prod`) est réservé au local : il charge `../../.env` via `dotenv -e` et rollback donc la base pointée par ce fichier, jamais la prod.
+
+### Arrêt propre (zero-downtime)
+
+Le serveur backend écoute `SIGTERM`/`SIGINT` : à l'arrêt, il cesse d'accepter de nouvelles connexions, laisse les requêtes en cours se terminer, ferme le pool PostgreSQL, puis quitte (avec un timeout de sécurité de 10s en cas de blocage). Ça évite de couper des requêtes en cours à chaque redéploiement.
+
+### Sauvegardes
+
+Aucune sauvegarde automatisée n'est configurée dans ce repo. Railway propose des snapshots selon le plan Postgres choisi (à vérifier/activer depuis son dashboard). Pour une sauvegarde manuelle ponctuelle :
+
+```bash
+pg_dump "$DATABASE_URL" > backup-$(date +%Y%m%d).sql
+```
 
 ## Notes production
 
 Le `.env.example` est pensé pour le local. En prod, il faut surtout vérifier :
 
+- `NODE_ENV=production`
 - `COOKIE_SECURE=true`
 - origins CORS correctes
 - `JWT_SECRET` fort
 - `PUBLIC_BASE_URL` aligné avec le domaine public
+- `LOG_PRETTY` laissé à `false` (le pretty-printer `pino-pretty` est une dépendance de dev)
 
 ---

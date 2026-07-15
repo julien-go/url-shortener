@@ -9,11 +9,16 @@ import { resolvers } from "./graphql/resolvers";
 import { redirectRouter } from "./http/routes/redirect.route";
 import { buildContext } from "./graphql/context";
 import {
+  authIpRateLimit,
   authRateLimit,
   createShortUrlRateLimit,
 } from "./security/rateLimit.middleware";
 import { securityHeadersMiddleware } from "./security/headers";
 import { getRateLimitMetricsSnapshot } from "./security/rateLimit";
+import { logger } from "./utils/logger";
+import { pool } from "./db/pool";
+
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const app = express();
 const isProduction = env.NODE_ENV === "production";
@@ -31,8 +36,11 @@ app.use(
       return callback(new Error("Origin not allowed by CORS"));
     },
     credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
   }),
   express.json({ limit: env.JSON_BODY_LIMIT }),
+  authIpRateLimit,
   authRateLimit,
   createShortUrlRateLimit,
 );
@@ -42,14 +50,18 @@ const server = new ApolloServer({
   resolvers,
   introspection: !isProduction,
   includeStacktraceInErrorResponses: !isProduction,
-  formatError: (formattedError, _error) => {
-    if (!isProduction) return formattedError;
-
+  formatError: (formattedError, error) => {
     const extensionCode = formattedError.extensions?.code;
     const safeCode =
       typeof extensionCode === "string" && extensionCode.length > 0
         ? extensionCode
         : "INTERNAL_SERVER_ERROR";
+
+    if (safeCode === "INTERNAL_SERVER_ERROR") {
+      logger.error({ err: error }, "GraphQL internal error");
+    }
+
+    if (!isProduction) return formattedError;
 
     return new GraphQLError(
       safeCode === "INTERNAL_SERVER_ERROR"
@@ -92,6 +104,38 @@ if (env.METRICS_ENABLED) {
 
 app.use("/", redirectRouter);
 
-app.listen(env.PORT, () => {
-  console.log(`✅ Backend GraphQL: ${env.PUBLIC_BASE_URL}/graphql`);
+const httpServer = app.listen(env.PORT, () => {
+  logger.info(
+    { url: `${env.PUBLIC_BASE_URL}/graphql` },
+    "Backend GraphQL ready",
+  );
 });
+
+let isShuttingDown = false;
+
+function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  logger.info({ signal }, "Shutting down");
+
+  const forceExit = setTimeout(() => {
+    logger.warn("Shutdown timed out, forcing exit");
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+
+  httpServer.closeIdleConnections();
+
+  httpServer.close(async () => {
+    try {
+      await pool.end();
+    } catch (err) {
+      logger.error({ err }, "Error closing pg pool");
+    }
+    clearTimeout(forceExit);
+    process.exit(0);
+  });
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

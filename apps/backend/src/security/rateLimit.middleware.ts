@@ -5,6 +5,7 @@ import { env } from "../config/env";
 import { createFixedWindowRateLimit } from "./rateLimit";
 import { extractCookieValue } from "./authCookies";
 import { renderStatusPage } from "../http/statusPage";
+import { logger } from "../utils/logger";
 
 function getClientIp(req: Request): string {
   return req.ip || req.socket.remoteAddress || "unknown";
@@ -15,7 +16,7 @@ function hashForLogs(value: string): string {
 }
 
 function tryVerifyToken(token: string): { sub?: string } | null {
-  const secret = process.env.JWT_SECRET;
+  const secret = env.JWT_SECRET;
   if (!secret) return null;
 
   try {
@@ -106,6 +107,23 @@ type AuthBlockState = {
 };
 
 const authBlockByIdentity = new Map<string, AuthBlockState>();
+const AUTH_BLOCK_MAX_ENTRIES = 10_000;
+
+function ensureAuthBlockCapacity(now: number): void {
+  if (authBlockByIdentity.size < AUTH_BLOCK_MAX_ENTRIES) return;
+
+  for (const [identity, state] of authBlockByIdentity.entries()) {
+    if (state.blockedUntilMs <= now) {
+      authBlockByIdentity.delete(identity);
+    }
+  }
+
+  while (authBlockByIdentity.size >= AUTH_BLOCK_MAX_ENTRIES) {
+    const oldest = authBlockByIdentity.keys().next().value;
+    if (oldest === undefined) break;
+    authBlockByIdentity.delete(oldest);
+  }
+}
 
 function getAuthBackoffSeconds(strikes: number): number {
   const boundedStrike = Math.max(1, Math.min(strikes, 6));
@@ -139,7 +157,9 @@ export const redirectRateLimit = createFixedWindowRateLimit({
           renderStatusPage({
             title: `Too many requests • ${env.APP_NAME}`,
             heading: "Too many requests",
-            message: `You have reached the request limit for this short link. Please try again in ${retryAfterSeconds} second(s).`,
+            message:
+              `You have reached the request limit for this short link. ` +
+              `Please try again in ${retryAfterSeconds} second(s).`,
             actionHref: req.originalUrl,
             actionLabel: "Try again",
           }),
@@ -162,6 +182,14 @@ export const createShortUrlRateLimit = createFixedWindowRateLimit({
   skip: (req) => !isCreateShortUrlOperation(req),
 });
 
+export const authIpRateLimit = createFixedWindowRateLimit({
+  name: "auth-ip",
+  windowMs: env.RL_AUTH_WINDOW_MS,
+  max: env.RL_AUTH_IP_MAX,
+  keyGenerator: (req) => `authip:${getClientIp(req)}`,
+  skip: (req) => !isAuthMutationOperation(req),
+});
+
 export const authRateLimit = createFixedWindowRateLimit({
   name: "auth",
   windowMs: env.RL_AUTH_WINDOW_MS,
@@ -171,6 +199,8 @@ export const authRateLimit = createFixedWindowRateLimit({
   onLimit: (req, res, retryAfterSeconds) => {
     const identity = createAuthIdentity(req);
     const now = Date.now();
+
+    ensureAuthBlockCapacity(now);
 
     const state = authBlockByIdentity.get(identity);
 
@@ -196,16 +226,18 @@ export const authRateLimit = createFixedWindowRateLimit({
       blockedUntilMs: now + backoffSeconds * 1000,
     });
 
-    console.warn("[rate-limit] auth blocked", {
-      limiter: "auth",
-      route: req.originalUrl,
-      method: req.method,
-      ipHash: hashForLogs(getClientIp(req)),
-      emailHash: hashForLogs(extractAuthEmail(req) ?? "unknown-email"),
-      strikes: nextStrikes,
-      backoffSeconds,
-      at: new Date().toISOString(),
-    });
+    logger.warn(
+      {
+        limiter: "auth",
+        route: req.originalUrl,
+        method: req.method,
+        ipHash: hashForLogs(getClientIp(req)),
+        emailHash: hashForLogs(extractAuthEmail(req) ?? "unknown-email"),
+        strikes: nextStrikes,
+        backoffSeconds,
+      },
+      "rate-limit auth blocked",
+    );
 
     const finalRetryAfter = Math.max(retryAfterSeconds, backoffSeconds);
     res.setHeader("Retry-After", String(finalRetryAfter));

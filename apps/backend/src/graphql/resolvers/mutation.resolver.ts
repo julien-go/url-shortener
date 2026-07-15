@@ -7,6 +7,7 @@ import {
   incrementUserTokenVersion,
 } from "../../modules/users/users.repo";
 import {
+  DUMMY_PASSWORD_HASH,
   hashPassword,
   signToken,
   verifyPassword,
@@ -29,6 +30,14 @@ function isPgUniqueViolation(error: unknown): error is {
   return !!error && typeof error === "object" && "code" in error;
 }
 
+function getCreateShortUrlErrorMessage(
+  reason: "INVALID_URL" | "INVALID_CODE" | "SLUG_TAKEN",
+): string {
+  if (reason === "INVALID_URL") return "Invalid URL";
+  if (reason === "INVALID_CODE") return "Invalid slug";
+  return "Code already taken";
+}
+
 export const mutationResolvers = {
   createShortUrl: async (
     _: unknown,
@@ -46,12 +55,7 @@ export const mutationResolvers = {
       const result = await createShortUrl(parsed.data, currentUser.id);
 
       if (!result.ok) {
-        const message =
-          result.reason === "INVALID_URL"
-            ? "Invalid URL"
-            : result.reason === "INVALID_CODE"
-              ? "Invalid slug"
-              : "Code already taken";
+        const message = getCreateShortUrlErrorMessage(result.reason);
 
         throw new GraphQLError(message, {
           extensions: { code: "BAD_USER_INPUT", reason: result.reason },
@@ -64,7 +68,7 @@ export const mutationResolvers = {
           code: result.shortUrl.code,
           originalUrl: result.shortUrl.target_url,
           createdAt: result.shortUrl.created_at,
-          clickCount: 0,
+          clickCount: "0",
           shortLink: result.shortLink,
         },
         shortLink: result.shortLink,
@@ -87,13 +91,6 @@ export const mutationResolvers = {
 
     const { email, password } = parsed.data;
 
-    const existing = await findUserByEmail(email);
-    if (existing) {
-      throw new GraphQLError("Email already in use", {
-        extensions: { code: "BAD_USER_INPUT", reason: "EMAIL_TAKEN" },
-      });
-    }
-
     try {
       const passwordHash = await hashPassword(password);
       const user = await createUser(email, passwordHash);
@@ -113,8 +110,8 @@ export const mutationResolvers = {
       };
     } catch (error) {
       if (isPgUniqueViolation(error) && error.code === "23505") {
-        throw new GraphQLError("Email already in use", {
-          extensions: { code: "BAD_USER_INPUT", reason: "EMAIL_TAKEN" },
+        throw new GraphQLError("Registration failed", {
+          extensions: { code: "BAD_USER_INPUT", reason: "REGISTRATION_FAILED" },
         });
       }
 
@@ -135,12 +132,13 @@ export const mutationResolvers = {
     const { email, password } = parsed.data;
 
     const user = await findUserByEmail(email);
-    if (!user) {
-      badUserInput("Invalid credentials");
-    }
 
-    const ok = await verifyPassword(password, user.password_hash);
-    if (!ok) {
+    const ok = await verifyPassword(
+      password,
+      user?.password_hash ?? DUMMY_PASSWORD_HASH,
+    );
+
+    if (!user || !ok) {
       badUserInput("Invalid credentials");
     }
 

@@ -1,11 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL as string;
 
-let onUnauthenticated: (() => void) | null = null;
-
-export function setGraphqlOnUnauthenticated(fn: () => void) {
-  onUnauthenticated = fn;
-}
-
 export type GraphQLErrorItem = {
   message: string;
   locations?: { line: number; column: number }[];
@@ -25,6 +19,31 @@ export class GraphQLRequestError extends Error {
   }
 }
 
+async function parseJsonBody(res: Response): Promise<unknown> {
+  try {
+    return await res.json();
+  } catch {
+    throw new GraphQLRequestError("Invalid JSON response", [], res.status);
+  }
+}
+
+function extractGraphQLErrors(json: unknown): GraphQLErrorItem[] | null {
+  if (
+    typeof json === "object" &&
+    json !== null &&
+    "errors" in json &&
+    Array.isArray((json as { errors?: unknown }).errors) &&
+    (json as { errors?: unknown[] }).errors?.length
+  ) {
+    return (json as { errors: GraphQLErrorItem[] }).errors;
+  }
+  return null;
+}
+
+function hasData(json: unknown): json is { data: unknown } {
+  return typeof json === "object" && json !== null && "data" in json;
+}
+
 export async function graphqlFetch<
   TData,
   TVars extends Record<string, unknown> = Record<string, never>,
@@ -38,40 +57,23 @@ export async function graphqlFetch<
     body: JSON.stringify({ query, variables }),
   });
 
-  let json: unknown;
-  try {
-    json = await res.json();
-  } catch {
-    throw new GraphQLRequestError("Invalid JSON response", [], res.status);
-  }
+  const json = await parseJsonBody(res);
 
   if (!res.ok) {
     throw new GraphQLRequestError("HTTP error", [], res.status);
   }
 
-  if (
-    typeof json === "object" &&
-    json !== null &&
-    "errors" in json &&
-    Array.isArray((json as { errors?: unknown }).errors) &&
-    (json as { errors?: unknown[] }).errors?.length
-  ) {
-    const first = (json as { errors: GraphQLErrorItem[] }).errors[0];
-    const code = first?.extensions?.code;
-
-    if (code === "UNAUTHENTICATED") {
-      onUnauthenticated?.();
-    }
-
+  const errors = extractGraphQLErrors(json);
+  if (errors) {
     throw new GraphQLRequestError(
-      first?.message ?? "GraphQL error",
-      (json as { errors: GraphQLErrorItem[] }).errors,
+      errors[0]?.message ?? "GraphQL error",
+      errors,
       res.status,
     );
   }
 
-  if (typeof json === "object" && json !== null && "data" in json) {
-    return (json as { data: TData }).data;
+  if (hasData(json)) {
+    return json.data as TData;
   }
 
   throw new GraphQLRequestError("Missing GraphQL data", [], res.status);

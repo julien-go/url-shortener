@@ -6,6 +6,7 @@ export function useMe() {
     queryKey: ["me"],
     queryFn: () => me(),
     retry: false,
+    staleTime: 30_000,
     select: (data) => data.me,
   });
 }
