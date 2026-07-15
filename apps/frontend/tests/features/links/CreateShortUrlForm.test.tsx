@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { CreateShortUrlForm } from "../../../src/features/links/components/CreateShortUrlForm";
+import { ToastProvider } from "../../../src/app/providers/ToastProvider";
 
 function createQueryClient() {
   return new QueryClient({
@@ -17,7 +18,9 @@ function createQueryClient() {
 function renderForm() {
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <CreateShortUrlForm />
+      <ToastProvider>
+        <CreateShortUrlForm />
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }
@@ -26,95 +29,98 @@ describe("CreateShortUrlForm", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
-  it("submit: trims slug", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            createShortUrl: {
-              shortLink: "https://short.test/promo-2026",
-              shortUrl: {
-                id: "1",
-                code: "promo-2026",
-                originalUrl: "https://example.com",
-                createdAt: new Date().toISOString(),
+
+  describe("submit", () => {
+    it("trims slug", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              createShortUrl: {
+                shortLink: "https://short.test/promo-2026",
+                shortUrl: {
+                  id: "1",
+                  code: "promo-2026",
+                  originalUrl: "https://example.com",
+                  createdAt: new Date().toISOString(),
+                },
               },
             },
-          },
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
-    );
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
 
-    renderForm();
+      renderForm();
 
-    fireEvent.change(screen.getByLabelText("Original URL"), {
-      target: { value: "https://example.com" },
-    });
+      fireEvent.change(screen.getByLabelText("Original URL"), {
+        target: { value: "https://example.com" },
+      });
 
-    fireEvent.change(screen.getByLabelText("Custom slug (optional)"), {
-      target: { value: "  promo-2026  " },
-    });
+      fireEvent.change(screen.getByLabelText("Custom slug (optional)"), {
+        target: { value: "  promo-2026  " },
+      });
 
-    fireEvent.click(screen.getByRole("button", { name: "Create link" }));
+      fireEvent.click(screen.getByRole("button", { name: "Create link" }));
 
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-      const request = fetchSpy.mock.calls[0]?.[1] as RequestInit;
-      const body = JSON.parse(String(request.body)) as {
-        variables: { input: { originalUrl: string; code?: string } };
-      };
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+        const request = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+        const body = JSON.parse(String(request.body)) as {
+          variables: { input: { originalUrl: string; code?: string } };
+        };
 
-      expect(body.variables.input).toEqual({
-        originalUrl: "https://example.com",
-        code: "promo-2026",
+        expect(body.variables.input).toEqual({
+          originalUrl: "https://example.com",
+          code: "promo-2026",
+        });
       });
     });
-  });
 
-  it("submit: whitespace slug => undefined", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            createShortUrl: {
-              shortLink: "https://short.test/abc",
-              shortUrl: {
-                id: "1",
-                code: "abc",
-                originalUrl: "https://example.com",
-                createdAt: new Date().toISOString(),
+    it("whitespace slug => undefined", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              createShortUrl: {
+                shortLink: "https://short.test/abc",
+                shortUrl: {
+                  id: "1",
+                  code: "abc",
+                  originalUrl: "https://example.com",
+                  createdAt: new Date().toISOString(),
+                },
               },
             },
-          },
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
-    );
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
 
-    renderForm();
+      renderForm();
 
-    fireEvent.change(screen.getByLabelText("Original URL"), {
-      target: { value: "https://example.com" },
-    });
-
-    fireEvent.change(screen.getByLabelText("Custom slug (optional)"), {
-      target: { value: "   " },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Create link" }));
-
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-      const request = fetchSpy.mock.calls[0]?.[1] as RequestInit;
-      const body = JSON.parse(String(request.body)) as {
-        variables: { input: { originalUrl: string; code?: string } };
-      };
-
-      expect(body.variables.input).toEqual({
-        originalUrl: "https://example.com",
+      fireEvent.change(screen.getByLabelText("Original URL"), {
+        target: { value: "https://example.com" },
       });
-      expect(body.variables.input.code).toBeUndefined();
+
+      fireEvent.change(screen.getByLabelText("Custom slug (optional)"), {
+        target: { value: "   " },
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Create link" }));
+
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+        const request = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+        const body = JSON.parse(String(request.body)) as {
+          variables: { input: { originalUrl: string; code?: string } };
+        };
+
+        expect(body.variables.input).toEqual({
+          originalUrl: "https://example.com",
+        });
+        expect(body.variables.input.code).toBeUndefined();
+      });
     });
   });
 

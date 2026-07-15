@@ -6,6 +6,13 @@ const repoMocks = vi.hoisted(() => ({
   trackClick: vi.fn(),
 }));
 vi.mock("../src/modules/shortUrls/shortUrls.repo", () => repoMocks);
+vi.mock("../src/config/env", () => ({
+  env: {
+    PUBLIC_BASE_URL: "https://short.test",
+    NODE_ENV: "test",
+    LOG_LEVEL: "silent",
+  },
+}));
 
 import {
   createShortUrl,
@@ -16,7 +23,6 @@ import * as shortUrlsUtils from "../src/modules/shortUrls/shortUrls.utils";
 describe("shortUrls.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.PUBLIC_BASE_URL = "https://short.test";
   });
 
   describe("createShortUrl", () => {
@@ -72,6 +78,16 @@ describe("shortUrls.service", () => {
   });
 
   describe("resolveShortUrl", () => {
+    function linkRow(overrides: Record<string, unknown> = {}) {
+      return {
+        id: "id-1",
+        target_url: "https://example.com",
+        deleted_at: null,
+        is_active: true,
+        ...overrides,
+      };
+    }
+
     it("returns NOT_FOUND when code does not exist", async () => {
       repoMocks.findByCode.mockResolvedValue(null);
 
@@ -81,12 +97,9 @@ describe("shortUrls.service", () => {
     });
 
     it("returns DELETED when link was deleted", async () => {
-      repoMocks.findByCode.mockResolvedValue({
-        id: "id-1",
-        target_url: "https://example.com",
-        deleted_at: new Date().toISOString(),
-        is_active: true,
-      });
+      repoMocks.findByCode.mockResolvedValue(
+        linkRow({ deleted_at: new Date().toISOString() }),
+      );
 
       const result = await resolveShortUrl("deleted");
 
@@ -95,12 +108,7 @@ describe("shortUrls.service", () => {
     });
 
     it("returns INACTIVE when link is disabled", async () => {
-      repoMocks.findByCode.mockResolvedValue({
-        id: "id-1",
-        target_url: "https://example.com",
-        deleted_at: null,
-        is_active: false,
-      });
+      repoMocks.findByCode.mockResolvedValue(linkRow({ is_active: false }));
 
       const result = await resolveShortUrl("inactive");
 
@@ -108,12 +116,7 @@ describe("shortUrls.service", () => {
     });
 
     it("returns target url and tracks click by default", async () => {
-      repoMocks.findByCode.mockResolvedValue({
-        id: "id-1",
-        target_url: "https://example.com",
-        deleted_at: null,
-        is_active: true,
-      });
+      repoMocks.findByCode.mockResolvedValue(linkRow());
       repoMocks.trackClick.mockResolvedValue(undefined);
 
       const result = await resolveShortUrl("code-1");
@@ -123,12 +126,7 @@ describe("shortUrls.service", () => {
     });
 
     it("can disable tracking when requested", async () => {
-      repoMocks.findByCode.mockResolvedValue({
-        id: "id-1",
-        target_url: "https://example.com",
-        deleted_at: null,
-        is_active: true,
-      });
+      repoMocks.findByCode.mockResolvedValue(linkRow());
 
       const result = await resolveShortUrl("slug-1", { track: false });
 

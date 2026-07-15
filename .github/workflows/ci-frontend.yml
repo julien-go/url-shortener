@@ -45,5 +45,8 @@ jobs:
       - name: Typecheck
         run: pnpm --filter ./apps/frontend typecheck
 
+      - name: Test
+        run: pnpm --filter ./apps/frontend test
+
       - name: Build
         run: pnpm --filter ./apps/frontend build

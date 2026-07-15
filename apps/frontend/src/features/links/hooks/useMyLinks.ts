@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchMyLinks } from "../api/myLinks.query";
 
 export function useMyLinks(
@@ -11,5 +11,6 @@ export function useMyLinks(
     queryFn: () => fetchMyLinks({ limit, cursor }),
     enabled,
     staleTime: 10_000,
+    placeholderData: keepPreviousData,
   });
 }

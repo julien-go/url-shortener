@@ -5,17 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import App from "../src/app/App";
 import { AuthContext } from "../src/app/providers/authContext";
+import { ToastProvider } from "../src/app/providers/ToastProvider";
 
-vi.mock("../src/features/auth/hooks/useMe", () => ({
-  useMe: () => ({
-    data: {
-      id: "u1",
-      email: "test@example.com",
-      createdAt: new Date().toISOString(),
-    },
-    isLoading: false,
-  }),
-}));
+const useMeMock = vi.hoisted(() => vi.fn());
+vi.mock("../src/features/auth/hooks/useMe", () => ({ useMe: useMeMock }));
 
 vi.mock("../src/features/links/hooks/useMyLinks", () => ({
   useMyLinks: () => ({
@@ -44,11 +37,13 @@ function renderApp(initialEntry: string) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <QueryClientProvider client={queryClient}>
-        <AuthContext.Provider
-          value={{ refreshSession: vi.fn(), logout: vi.fn() }}
-        >
-          <App />
-        </AuthContext.Provider>
+        <ToastProvider>
+          <AuthContext.Provider
+            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
+          >
+            <App />
+          </AuthContext.Provider>
+        </ToastProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -57,11 +52,27 @@ function renderApp(initialEntry: string) {
 describe("App protected routes", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    useMeMock.mockReturnValue({
+      data: {
+        id: "u1",
+        email: "test@example.com",
+        createdAt: new Date().toISOString(),
+      },
+      isLoading: false,
+    });
   });
 
   it("renders /links page when authenticated", async () => {
     renderApp("/links");
 
     expect(await screen.findByText("No links yet.")).toBeInTheDocument();
+  });
+
+  it("shows a loading state while the auth check is pending", () => {
+    useMeMock.mockReturnValue({ data: undefined, isLoading: true });
+
+    renderApp("/links");
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading…");
   });
 });

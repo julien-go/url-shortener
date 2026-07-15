@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isHttpUrlProtocol } from "../../modules/shortUrls/shortUrls.utils";
 
 export const createShortUrlInputSchema = z
   .object({
@@ -7,10 +8,7 @@ export const createShortUrlInputSchema = z
       .trim()
       .url()
       .max(2048)
-      .refine((url) => {
-        const protocol = new URL(url).protocol;
-        return protocol === "http:" || protocol === "https:";
-      }, "Only http/https URLs are allowed"),
+      .refine(isHttpUrlProtocol, "Only http/https URLs are allowed"),
     code: z.preprocess(
       (value) =>
         typeof value === "string" && value.trim() === "" ? undefined : value,

@@ -1,17 +1,11 @@
-import React, { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AuthContext, type AuthContextValue } from "./authContext";
 import { logout as logoutMutation } from "../../features/auth/api/logout.mutation";
-import { useQueryClient } from "@tanstack/react-query";
-import { setGraphqlOnUnauthenticated } from "../../lib/graphql/graphqlFetch";
+import { resetSessionQueries } from "../../features/auth/session";
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    setGraphqlOnUnauthenticated(() => {
-      void queryClient.setQueryData(["me"], { me: null });
-    });
-  }, [queryClient]);
 
   const refreshSession = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["me"] });
@@ -21,8 +15,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await logoutMutation();
     } finally {
-      await queryClient.setQueryData(["me"], { me: null });
-      await queryClient.invalidateQueries({ queryKey: ["myLinks"] });
+      resetSessionQueries(queryClient);
     }
   }, [queryClient]);
 

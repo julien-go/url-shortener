@@ -1,6 +1,8 @@
 import * as React from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useLinkStats } from "../features/links/hooks/useLinkStats";
+import { useCopyWithToast } from "../features/links/hooks/useCopyWithToast";
+import { Skeleton } from "../components/ui/skeleton";
 
 import {
   getGraphQLErrorCode,
@@ -26,20 +28,21 @@ export function LinkStatsPage() {
   const linkId = params.id ?? "";
 
   const [range, setRange] = React.useState<"DAYS_7" | "DAYS_30">("DAYS_7");
-  const [copyStatus, setCopyStatus] = React.useState<
-    "idle" | "copied" | "error"
-  >("idle");
+  const copyWithToast = useCopyWithToast();
 
   const linkStatsQuery = useLinkStats(linkId, range);
 
-  if (linkStatsQuery.isLoading || linkStatsQuery.isFetching) {
+  if (linkStatsQuery.isLoading) {
     return (
       <div
         role="status"
         aria-live="polite"
-        className="rounded-md border border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground"
+        aria-label="Loading statistics"
+        className="space-y-5"
       >
-        Loading statistics…
+        <Skeleton className="h-9 w-48" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-56 w-full" />
       </div>
     );
   }
@@ -55,16 +58,7 @@ export function LinkStatsPage() {
   async function handleCopyShortLink() {
     const shortLink = linkDetails?.shortLink;
     if (!shortLink) return;
-
-    try {
-      await navigator.clipboard.writeText(shortLink);
-      setCopyStatus("copied");
-    } catch {
-      setCopyStatus("error");
-    }
-    window.setTimeout(() => {
-      setCopyStatus("idle");
-    }, 1200);
+    await copyWithToast(shortLink);
   }
 
   return (
@@ -74,7 +68,6 @@ export function LinkStatsPage() {
       <LinkDetailsSection
         linkDetails={linkDetails}
         queryError={linkStatsQuery.error}
-        copyStatus={copyStatus}
         onCopy={handleCopyShortLink}
       />
       <MetricsSummarySection

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { graphqlFetch } from "../../../lib/graphql/graphqlFetch";
 import type { LinkStatsResponse } from "../api/types";
 
@@ -26,7 +26,7 @@ const LINK_STATS_QUERY = `#graphql
   }
 `;
 
-export function fetchLinkStats(params: { linkId: string; range: StatsRange }) {
+function fetchLinkStats(params: { linkId: string; range: StatsRange }) {
   return graphqlFetch<LinkStatsResponse, typeof params>(
     LINK_STATS_QUERY,
     params,
@@ -43,5 +43,6 @@ export function useLinkStats(
     queryFn: () => fetchLinkStats({ linkId, range }),
     enabled: enabled && Boolean(linkId),
     staleTime: 10_000,
+    placeholderData: keepPreviousData,
   });
 }

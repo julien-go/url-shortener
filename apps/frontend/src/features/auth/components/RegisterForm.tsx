@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useRegister } from "../hooks/useRegister";
 import { useAuth } from "../../../app/providers/useAuth";
 
@@ -9,11 +9,14 @@ import { Label } from "../../../components/ui/label";
 
 export function RegisterForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { refreshSession } = useAuth();
   const registerMutation = useRegister();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+
+  const from = (location.state as { from?: string } | null)?.from ?? "/";
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -21,7 +24,7 @@ export function RegisterForm() {
     try {
       await registerMutation.mutateAsync({ email, password });
       await refreshSession();
-      navigate("/");
+      navigate(from, { replace: true });
     } catch {
       // React Query will surface the error state.
     }
@@ -62,6 +65,7 @@ export function RegisterForm() {
           type="password"
           autoComplete="new-password"
           placeholder="••••••••"
+          minLength={8}
           aria-invalid={Boolean(errorMessage)}
           aria-describedby={errorMessage ? "register-form-error" : undefined}
           required

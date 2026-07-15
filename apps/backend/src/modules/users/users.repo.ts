@@ -6,7 +6,7 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
     `
     SELECT id, email, password_hash, token_version, created_at
     FROM users
-    WHERE email = $1
+    WHERE LOWER(email) = $1
     LIMIT 1
     `,
     [email.toLowerCase()],

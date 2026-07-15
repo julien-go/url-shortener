@@ -12,6 +12,7 @@ type MockReq = {
 
 type MockRes = {
   setHeader: ReturnType<typeof vi.fn>;
+  getHeader: ReturnType<typeof vi.fn>;
   status: ReturnType<typeof vi.fn>;
   json: ReturnType<typeof vi.fn>;
 };
@@ -38,8 +39,12 @@ function makeReq(overrides: Partial<MockReq> = {}): MockReq {
 }
 
 function makeRes(): MockRes {
+  const headers: Record<string, string | number | string[]> = {};
   const res: MockRes = {
-    setHeader: vi.fn(),
+    setHeader: vi.fn((name: string, value: string | number | string[]) => {
+      headers[name] = value;
+    }),
+    getHeader: vi.fn((name: string) => headers[name]),
     status: vi.fn(),
     json: vi.fn(),
   };
