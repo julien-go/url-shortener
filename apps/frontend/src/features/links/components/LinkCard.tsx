@@ -61,6 +61,7 @@ export function LinkCard({
         <Button
           variant="secondary"
           size="sm"
+          className="min-h-11"
           onClick={() => onStats(link.id)}
         >
           Statistics
@@ -68,6 +69,7 @@ export function LinkCard({
         <Button
           variant="outline"
           size="sm"
+          className="min-h-11"
           onClick={() => onCopy(link.shortLink)}
         >
           Copy
@@ -75,7 +77,7 @@ export function LinkCard({
         <Button
           variant="ghost"
           size="sm"
-          className="col-span-2 text-destructive/85 hover:text-destructive"
+          className="col-span-2 min-h-11 text-destructive/85 hover:text-destructive"
           onClick={() => onStartDelete(link.id)}
           disabled={isDeleting}
         >

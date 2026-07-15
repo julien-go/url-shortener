@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { CreateShortUrlForm } from "../../../src/features/links/components/CreateShortUrlForm";
+import { ToastProvider } from "../../../src/app/providers/ToastProvider";
 
 function createQueryClient() {
   return new QueryClient({
@@ -17,7 +18,9 @@ function createQueryClient() {
 function renderForm() {
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <CreateShortUrlForm />
+      <ToastProvider>
+        <CreateShortUrlForm />
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }

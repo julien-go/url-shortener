@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import App from "../src/app/App";
 import { AuthContext } from "../src/app/providers/authContext";
+import { ToastProvider } from "../src/app/providers/ToastProvider";
 
 vi.mock("../src/features/auth/hooks/useMe", () => ({
   useMe: () => ({
@@ -44,11 +45,13 @@ function renderApp(initialEntry: string) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <QueryClientProvider client={queryClient}>
-        <AuthContext.Provider
-          value={{ refreshSession: vi.fn(), logout: vi.fn() }}
-        >
-          <App />
-        </AuthContext.Provider>
+        <ToastProvider>
+          <AuthContext.Provider
+            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
+          >
+            <App />
+          </AuthContext.Provider>
+        </ToastProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   );

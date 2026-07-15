@@ -1,7 +1,8 @@
 import * as React from "react";
 import { useCreateShortUrl } from "../hooks/useCreateShortUrl";
 import { getCreateShortUrlErrorMessage } from "../hooks/errors";
-import { useCopyToClipboard } from "../../../lib/hooks/useCopyToClipboard";
+import { useToast } from "../../../app/providers/useToast";
+import { useCopyWithToast } from "../hooks/useCopyWithToast";
 
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -11,7 +12,8 @@ import { Separator } from "../../../components/ui/separator";
 export function CreateShortUrlForm() {
   const [originalUrl, setOriginalUrl] = React.useState("");
   const [code, setCode] = React.useState("");
-  const { status: copyStatus, copy } = useCopyToClipboard();
+  const { toast } = useToast();
+  const copyWithToast = useCopyWithToast();
 
   const createShortUrlMutation = useCreateShortUrl();
 
@@ -31,6 +33,7 @@ export function CreateShortUrlForm() {
         onSuccess: () => {
           setOriginalUrl("");
           setCode("");
+          toast({ message: "Short link created.", variant: "success" });
         },
       },
     );
@@ -38,9 +41,9 @@ export function CreateShortUrlForm() {
 
   const created = createShortUrlMutation.data?.createShortUrl;
 
-  const copyCreatedLink = async () => {
+  const copyCreatedLink = () => {
     if (!created?.shortLink) return;
-    await copy(created.shortLink);
+    void copyWithToast(created.shortLink);
   };
 
   return (
@@ -138,17 +141,6 @@ export function CreateShortUrlForm() {
                 </a>
               </Button>
             </div>
-            {copyStatus !== "idle" ? (
-              <p
-                role="status"
-                aria-live="polite"
-                className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90"
-              >
-                {copyStatus === "copied"
-                  ? "Copied to clipboard."
-                  : "Copy failed. Please copy manually."}
-              </p>
-            ) : null}
           </div>
         </div>
       ) : null}
