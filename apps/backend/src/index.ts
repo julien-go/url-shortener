@@ -16,6 +16,9 @@ import {
 import { securityHeadersMiddleware } from "./security/headers";
 import { getRateLimitMetricsSnapshot } from "./security/rateLimit";
 import { logger } from "./utils/logger";
+import { pool } from "./db/pool";
+
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const app = express();
 const isProduction = env.NODE_ENV === "production";
@@ -101,9 +104,38 @@ if (env.METRICS_ENABLED) {
 
 app.use("/", redirectRouter);
 
-app.listen(env.PORT, () => {
+const httpServer = app.listen(env.PORT, () => {
   logger.info(
     { url: `${env.PUBLIC_BASE_URL}/graphql` },
     "Backend GraphQL ready",
   );
 });
+
+let isShuttingDown = false;
+
+function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  logger.info({ signal }, "Shutting down");
+
+  const forceExit = setTimeout(() => {
+    logger.warn("Shutdown timed out, forcing exit");
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+
+  httpServer.closeIdleConnections();
+
+  httpServer.close(async () => {
+    try {
+      await pool.end();
+    } catch (err) {
+      logger.error({ err }, "Error closing pg pool");
+    }
+    clearTimeout(forceExit);
+    process.exit(0);
+  });
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

@@ -249,6 +249,35 @@ Le backend lit les agrégats `daily_clicks` et retourne les clics par jour, le t
 - `GET /healthz` : health check
 - `GET /metrics` : métriques de rate limiting (protégé par `METRICS_API_KEY`, désactivable via `METRICS_ENABLED`)
 
+## Déploiement
+
+### Frontend (Netlify)
+
+- Build command : `pnpm --filter ./apps/frontend build`
+- Publish directory : `apps/frontend/dist`
+- Variables d'environnement à configurer dans Netlify (Site settings → Environment variables) : `VITE_API_URL`, `VITE_APP_NAME`, `VITE_SITE_URL`
+- Le fallback SPA est géré par `apps/frontend/netlify.toml` (`/* → /index.html`)
+- Déploiement déclenché automatiquement à chaque push sur `main` (intégration Git Netlify)
+
+### Backend + DB (Railway)
+
+- Start command : `pnpm --filter ./apps/backend start` (lance `tsx src/index.ts`)
+- Variables d'environnement à configurer dans Railway : toutes celles listées dans `apps/backend/.env.example`, avec des valeurs de prod (voir "Notes production" ci-dessous)
+- Migrations : à appliquer après chaque déploiement qui change le schéma, via `pnpm --filter ./apps/backend db:migrate:prod` (utilise directement `DATABASE_URL`/`DBMATE_DATABASE_URL`, sans passer par un `.env` local)
+- Rollback d'une migration : `pnpm --filter ./apps/backend db:rollback:prod` (équivalent `dbmate down`, utilise directement `DATABASE_URL`/`DBMATE_DATABASE_URL` comme `db:migrate:prod`, sans passer par un `.env` local). `db:rollback` (sans `:prod`) est réservé au local : il charge `../../.env` via `dotenv -e` et rollback donc la base pointée par ce fichier, jamais la prod.
+
+### Arrêt propre (zero-downtime)
+
+Le serveur backend écoute `SIGTERM`/`SIGINT` : à l'arrêt, il cesse d'accepter de nouvelles connexions, laisse les requêtes en cours se terminer, ferme le pool PostgreSQL, puis quitte (avec un timeout de sécurité de 10s en cas de blocage). Ça évite de couper des requêtes en cours à chaque redéploiement.
+
+### Sauvegardes
+
+Aucune sauvegarde automatisée n'est configurée dans ce repo. Railway propose des snapshots selon le plan Postgres choisi (à vérifier/activer depuis son dashboard). Pour une sauvegarde manuelle ponctuelle :
+
+```bash
+pg_dump "$DATABASE_URL" > backup-$(date +%Y%m%d).sql
+```
+
 ## Notes production
 
 Le `.env.example` est pensé pour le local. En prod, il faut surtout vérifier :
