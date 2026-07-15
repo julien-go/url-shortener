@@ -1,11 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL as string;
 
-let onUnauthenticated: (() => void) | null = null;
-
-export function setGraphqlOnUnauthenticated(fn: () => void) {
-  onUnauthenticated = fn;
-}
-
 export type GraphQLErrorItem = {
   message: string;
   locations?: { line: number; column: number }[];
@@ -57,11 +51,6 @@ export async function graphqlFetch<
     (json as { errors?: unknown[] }).errors?.length
   ) {
     const first = (json as { errors: GraphQLErrorItem[] }).errors[0];
-    const code = first?.extensions?.code;
-
-    if (code === "UNAUTHENTICATED") {
-      onUnauthenticated?.();
-    }
 
     throw new GraphQLRequestError(
       first?.message ?? "GraphQL error",

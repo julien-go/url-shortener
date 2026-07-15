@@ -4,7 +4,8 @@ import { getGraphQLRequestErrorMessage } from "../features/links/hooks/errors";
 import { useMyLinks } from "../features/links/hooks/useMyLinks";
 import { useDeleteLink } from "../features/links/hooks/useDeleteLink";
 import { useCursorPagination } from "../features/links/hooks/useCursorPagination";
-import { useCopyToClipboard } from "../lib/hooks/useCopyToClipboard";
+import { useToast } from "../app/providers/useToast";
+import { useCopyWithToast } from "../features/links/hooks/useCopyWithToast";
 
 import {
   Table,
@@ -17,6 +18,7 @@ import {
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
+import { Skeleton } from "../components/ui/skeleton";
 import { MyLinksPagination } from "../features/links/components/MyLinksPagination";
 import { LinkCard } from "../features/links/components/LinkCard";
 import { LinkRow } from "../features/links/components/LinkRow";
@@ -26,7 +28,8 @@ const PAGE_SIZE = 10;
 export function MyLinksPage() {
   const navigate = useNavigate();
   const pagination = useCursorPagination();
-  const { status: copyStatus, copy } = useCopyToClipboard();
+  const { toast } = useToast();
+  const copyWithToast = useCopyWithToast();
 
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(
@@ -54,6 +57,7 @@ export function MyLinksPage() {
       onSuccess: () => {
         pagination.reset();
         setPendingDeleteId(null);
+        toast({ message: "Link deleted.", variant: "success" });
       },
       onSettled: () => setDeletingId(null),
     });
@@ -67,7 +71,7 @@ export function MyLinksPage() {
     isConfirmingDelete: pendingDeleteId === linkId,
     isDeleting: deleteLinkMutation.isPending && deletingId === linkId,
     onStats: (id: string) => navigate(`/links/${id}/stats`),
-    onCopy: (shortLink: string) => void copy(shortLink),
+    onCopy: (shortLink: string) => void copyWithToast(shortLink),
     onStartDelete: (id: string) => setPendingDeleteId(id),
     onCancelDelete: () => setPendingDeleteId(null),
     onConfirmDelete: confirmDeleteLink,
@@ -113,9 +117,12 @@ export function MyLinksPage() {
           <div
             role="status"
             aria-live="polite"
-            className="rounded-lg border border-border/80 bg-muted/35 p-5 text-sm text-muted-foreground"
+            aria-label="Loading your links"
+            className="space-y-2"
           >
-            Loading your links…
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-16 w-full" />
+            ))}
           </div>
         ) : myLinksQuery.isError ? (
           <div
@@ -183,17 +190,6 @@ export function MyLinksPage() {
             </div>
           </>
         )}
-        {copyStatus !== "idle" ? (
-          <div
-            role="status"
-            aria-live="polite"
-            className="border-l-2 border-primary/30 pl-3 text-sm text-muted-foreground/90"
-          >
-            {copyStatus === "copied"
-              ? "Copied to clipboard."
-              : "Copy failed. Please copy manually."}
-          </div>
-        ) : null}
 
         <MyLinksPagination
           canGoPrevious={pagination.canGoPrevious}

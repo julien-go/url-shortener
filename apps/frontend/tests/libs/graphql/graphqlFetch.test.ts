@@ -1,13 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import {
-  graphqlFetch,
-  setGraphqlOnUnauthenticated,
-} from "../../../src/lib/graphql/graphqlFetch";
+import { graphqlFetch } from "../../../src/lib/graphql/graphqlFetch";
 
 describe("graphqlFetch", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    setGraphqlOnUnauthenticated(() => undefined);
   });
 
   it("always sends credentials include", async () => {
@@ -42,10 +38,7 @@ describe("graphqlFetch", () => {
     });
   });
 
-  it("calls unauthenticated callback when GraphQL code is UNAUTHENTICATED", async () => {
-    const onUnauthenticated = vi.fn();
-    setGraphqlOnUnauthenticated(onUnauthenticated);
-
+  it("throws a GraphQLRequestError that preserves the error code in extensions", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -60,11 +53,10 @@ describe("graphqlFetch", () => {
       ),
     );
 
-    await expect(graphqlFetch("query { me { id } }")).rejects.toThrow(
-      "Unauthenticated",
-    );
-
-    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
+    await expect(graphqlFetch("query { me { id } }")).rejects.toMatchObject({
+      message: "Unauthenticated",
+      errors: [{ extensions: { code: "UNAUTHENTICATED" } }],
+    });
   });
 
   it("throws on invalid JSON response", async () => {

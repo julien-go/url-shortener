@@ -5,12 +5,10 @@ import type { LinkDetails } from "./types";
 export function LinkDetailsSection({
   linkDetails,
   queryError,
-  copyStatus,
   onCopy,
 }: {
   linkDetails: LinkDetails | null;
   queryError: unknown;
-  copyStatus: "idle" | "copied" | "error";
   onCopy: () => Promise<void>;
 }) {
   return (
@@ -24,13 +22,8 @@ export function LinkDetailsSection({
             size="sm"
             onClick={onCopy}
             disabled={!linkDetails?.shortLink}
-            aria-describedby="copy-link-status"
           >
-            {copyStatus === "copied"
-              ? "Copied"
-              : copyStatus === "error"
-                ? "Copy failed"
-                : "Copy"}
+            Copy
           </Button>
 
           <Button
@@ -47,18 +40,6 @@ export function LinkDetailsSection({
               Open
             </a>
           </Button>
-          <span
-            id="copy-link-status"
-            role="status"
-            aria-live="polite"
-            className="sr-only"
-          >
-            {copyStatus === "copied"
-              ? "Short link copied to clipboard."
-              : copyStatus === "error"
-                ? "Failed to copy short link."
-                : ""}
-          </span>
         </div>
       </div>
 
