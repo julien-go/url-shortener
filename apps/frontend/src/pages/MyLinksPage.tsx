@@ -72,7 +72,7 @@ export function MyLinksPage() {
       <div className="space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1.5">
-            <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-[2.15rem]">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-[2.15rem]">
               My links
             </h1>
             <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -81,12 +81,7 @@ export function MyLinksPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <Badge
-              variant="secondary"
-              className="border-border/70 bg-background/65 px-3 py-1 text-xs font-medium"
-            >
-              Total links: {totalCount}
-            </Badge>
+            <Badge variant="secondary">Total links: {totalCount}</Badge>
 
             <Button
               variant="outline"
@@ -102,7 +97,6 @@ export function MyLinksPage() {
       </div>
 
       <div className="space-y-4 px-1 sm:px-0">
-        <div className="h-px bg-border/55" />
         <MyLinksListSection
           isLoading={myLinksQuery.isLoading}
           isError={myLinksQuery.isError}

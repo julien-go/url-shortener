@@ -6,6 +6,7 @@ import { useAuth } from "../../../app/providers/useAuth";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { ErrorBanner } from "../../../components/ui/error-banner";
 
 export function RegisterForm() {
   const navigate = useNavigate();
@@ -81,18 +82,15 @@ export function RegisterForm() {
       </Button>
 
       {errorMessage ? (
-        <p
-          id="register-form-error"
-          role="alert"
-          className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {errorMessage}
-        </p>
+        <ErrorBanner id="register-form-error">{errorMessage}</ErrorBanner>
       ) : null}
 
       <p className="pt-1 text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link to="/login" className="underline hover:text-foreground">
+        <Link
+          to="/login"
+          className="font-semibold text-primary underline transition-opacity hover:opacity-60"
+        >
           Sign in
         </Link>
       </p>
