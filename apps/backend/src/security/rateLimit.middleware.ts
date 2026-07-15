@@ -157,7 +157,9 @@ export const redirectRateLimit = createFixedWindowRateLimit({
           renderStatusPage({
             title: `Too many requests • ${env.APP_NAME}`,
             heading: "Too many requests",
-            message: `You have reached the request limit for this short link. Please try again in ${retryAfterSeconds} second(s).`,
+            message:
+              `You have reached the request limit for this short link. ` +
+              `Please try again in ${retryAfterSeconds} second(s).`,
             actionHref: req.originalUrl,
             actionLabel: "Try again",
           }),
