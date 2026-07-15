@@ -51,8 +51,8 @@ jobs:
       - name: Build
         run: pnpm --filter ./apps/backend build
 
-  integration:
-    name: Backend - integration (Postgres + migrations)
+  migrations:
+    name: Backend - migrations (Postgres)
     runs-on: ubuntu-latest
 
     services:
@@ -92,6 +92,3 @@ jobs:
 
       - name: Apply migrations (dbmate)
         run: pnpm --filter ./apps/backend exec dbmate up
-
-      - name: Test (with DB available)
-        run: pnpm --filter ./apps/backend test

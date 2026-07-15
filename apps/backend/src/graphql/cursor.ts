@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 const decodedCursorSchema = z.object({
+  // Date.parse never throws (returns NaN on bad input), unlike `new URL()` —
+  // safe to call directly here even though an earlier check may have failed.
   createdAt: z
     .string()
     .min(1)
