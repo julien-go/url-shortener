@@ -83,6 +83,64 @@ export function getRateLimitMetricsSnapshot(): RateLimitCounter {
   };
 }
 
+function startNewWindow(
+  buckets: Map<string, Bucket>,
+  key: string,
+  windowMs: number,
+  max: number,
+  res: Response,
+): void {
+  const resetAt = Date.now() + windowMs;
+  buckets.set(key, { count: 1, resetAt });
+  writeRateLimitHeaders(res, {
+    limit: max,
+    remaining: max - 1,
+    resetAtMs: resetAt,
+  });
+}
+
+function blockRequest(
+  req: Request,
+  res: Response,
+  key: string,
+  bucket: Bucket,
+  name: string,
+  max: number,
+  onLimit: CreateFixedWindowRateLimitOptions["onLimit"],
+): void {
+  const retryAfterSeconds = Math.max(
+    1,
+    Math.ceil((bucket.resetAt - Date.now()) / 1000),
+  );
+
+  writeRateLimitHeaders(res, {
+    limit: max,
+    remaining: 0,
+    resetAtMs: bucket.resetAt,
+  });
+
+  trackBlocked(name);
+
+  logger.warn(
+    {
+      limiter: name,
+      route: req.originalUrl,
+      method: req.method,
+      keyHash: hashForLogs(key),
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      retryAfterSeconds,
+    },
+    "rate-limit blocked",
+  );
+
+  if (onLimit) {
+    onLimit(req, res, retryAfterSeconds);
+  } else {
+    write429(res, retryAfterSeconds);
+  }
+}
+
 export function createFixedWindowRateLimit(
   options: CreateFixedWindowRateLimitOptions,
 ): RequestHandler {
@@ -99,48 +157,12 @@ export function createFixedWindowRateLimit(
 
     const bucket = buckets.get(key);
     if (!bucket || bucket.resetAt <= now) {
-      const resetAt = now + windowMs;
-      buckets.set(key, { count: 1, resetAt });
-      writeRateLimitHeaders(res, {
-        limit: max,
-        remaining: max - 1,
-        resetAtMs: resetAt,
-      });
+      startNewWindow(buckets, key, windowMs, max, res);
       return next();
     }
 
     if (bucket.count >= max) {
-      const retryAfterSeconds = Math.max(
-        1,
-        Math.ceil((bucket.resetAt - now) / 1000),
-      );
-
-      writeRateLimitHeaders(res, {
-        limit: max,
-        remaining: 0,
-        resetAtMs: bucket.resetAt,
-      });
-
-      trackBlocked(name);
-
-      logger.warn(
-        {
-          limiter: name,
-          route: req.originalUrl,
-          method: req.method,
-          keyHash: hashForLogs(key),
-          ip: req.ip,
-          userAgent: req.headers["user-agent"],
-          retryAfterSeconds,
-        },
-        "rate-limit blocked",
-      );
-
-      if (onLimit) {
-        onLimit(req, res, retryAfterSeconds);
-      } else {
-        write429(res, retryAfterSeconds);
-      }
+      blockRequest(req, res, key, bucket, name, max, onLimit);
       return;
     }
 

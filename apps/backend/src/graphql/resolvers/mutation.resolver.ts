@@ -30,6 +30,14 @@ function isPgUniqueViolation(error: unknown): error is {
   return !!error && typeof error === "object" && "code" in error;
 }
 
+function getCreateShortUrlErrorMessage(
+  reason: "INVALID_URL" | "INVALID_CODE" | "SLUG_TAKEN",
+): string {
+  if (reason === "INVALID_URL") return "Invalid URL";
+  if (reason === "INVALID_CODE") return "Invalid slug";
+  return "Code already taken";
+}
+
 export const mutationResolvers = {
   createShortUrl: async (
     _: unknown,
@@ -47,12 +55,7 @@ export const mutationResolvers = {
       const result = await createShortUrl(parsed.data, currentUser.id);
 
       if (!result.ok) {
-        const message =
-          result.reason === "INVALID_URL"
-            ? "Invalid URL"
-            : result.reason === "INVALID_CODE"
-              ? "Invalid slug"
-              : "Code already taken";
+        const message = getCreateShortUrlErrorMessage(result.reason);
 
         throw new GraphQLError(message, {
           extensions: { code: "BAD_USER_INPUT", reason: result.reason },

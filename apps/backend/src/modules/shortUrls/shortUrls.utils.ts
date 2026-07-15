@@ -13,6 +13,13 @@ const BLOCKED_HOSTNAMES = new Set([
   "100.100.100.200",
 ]);
 
+const IPV4_OCTET_MAX = 255;
+const PRIVATE_CLASS_A_OCTET = 10;
+const LOOPBACK_OCTET = 127;
+const LINK_LOCAL_OCTETS = { first: 169, second: 254 };
+const PRIVATE_CLASS_B_OCTETS = { first: 172, secondMin: 16, secondMax: 31 };
+const PRIVATE_CLASS_C_OCTETS = { first: 192, second: 168 };
+
 export function isValidHttpUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -83,7 +90,7 @@ function isIPv4(value: string): boolean {
   return parts.every((part) => {
     if (!/^\d+$/.test(part)) return false;
     const n = Number(part);
-    return n >= 0 && n <= 255;
+    return n >= 0 && n <= IPV4_OCTET_MAX;
   });
 }
 
@@ -91,11 +98,13 @@ function isPrivateIPv4(ip: string): boolean {
   const [a, b] = ip.split(".").map(Number);
 
   return (
-    a === 10 ||
-    a === 127 ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168)
+    a === PRIVATE_CLASS_A_OCTET ||
+    a === LOOPBACK_OCTET ||
+    (a === LINK_LOCAL_OCTETS.first && b === LINK_LOCAL_OCTETS.second) ||
+    (a === PRIVATE_CLASS_B_OCTETS.first &&
+      b >= PRIVATE_CLASS_B_OCTETS.secondMin &&
+      b <= PRIVATE_CLASS_B_OCTETS.secondMax) ||
+    (a === PRIVATE_CLASS_C_OCTETS.first && b === PRIVATE_CLASS_C_OCTETS.second)
   );
 }
 

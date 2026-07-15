@@ -26,7 +26,7 @@ const LINK_STATS_QUERY = `#graphql
   }
 `;
 
-export function fetchLinkStats(params: { linkId: string; range: StatsRange }) {
+function fetchLinkStats(params: { linkId: string; range: StatsRange }) {
   return graphqlFetch<LinkStatsResponse, typeof params>(
     LINK_STATS_QUERY,
     params,

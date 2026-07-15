@@ -19,7 +19,7 @@ export async function verifyPassword(
   return bcrypt.compare(password, hash);
 }
 
-export function getJwtSecret(): string {
+function getJwtSecret(): string {
   const secret = env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is not set");
   return secret;
