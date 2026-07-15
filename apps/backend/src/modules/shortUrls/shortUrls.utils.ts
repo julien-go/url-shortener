@@ -20,14 +20,20 @@ const LINK_LOCAL_OCTETS = { first: 169, second: 254 };
 const PRIVATE_CLASS_B_OCTETS = { first: 172, secondMin: 16, secondMax: 31 };
 const PRIVATE_CLASS_C_OCTETS = { first: 192, second: 168 };
 
-export function isValidHttpUrl(url: string): boolean {
+export function isHttpUrlProtocol(url: string): boolean {
   try {
-    const parsed = new URL(url);
-    const isHttp = parsed.protocol === "http:" || parsed.protocol === "https:";
+    const protocol = new URL(url).protocol;
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
-    if (!isHttp) return false;
+export function isValidHttpUrl(url: string): boolean {
+  if (!isHttpUrlProtocol(url)) return false;
 
-    return !isPrivateOrSensitiveHost(parsed.hostname);
+  try {
+    return !isPrivateOrSensitiveHost(new URL(url).hostname);
   } catch {
     return false;
   }
