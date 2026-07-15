@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { appConfig } from "../config/app";
+import { useDocumentTitle } from "../lib/hooks/useDocumentTitle";
 
 function FeatureBadge({ children }: { children: ReactNode }) {
   return (
@@ -41,6 +42,11 @@ function ExamplePreview() {
 }
 
 export function HomeLanding() {
+  useDocumentTitle(
+    `${appConfig.appName} - URL Shortener`,
+    "Create short links, manage them in a dashboard, and track daily clicks.",
+  );
+
   return (
     <section
       className={`mt-10 flex min-h-[60vh] min-w-0 flex-col justify-center
