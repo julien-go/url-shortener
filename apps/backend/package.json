@@ -17,7 +17,8 @@
     "db:status": "dotenv -e ../../.env -- cross-env DBMATE_MIGRATIONS_DIR=./migrations dbmate status",
     "db:rollback": "dotenv -e ../../.env -- cross-env DBMATE_MIGRATIONS_DIR=./migrations dbmate down",
     "db:migrate:prod": "cross-env DBMATE_MIGRATIONS_DIR=./migrations dbmate up",
-    "db:status:prod": "cross-env DBMATE_MIGRATIONS_DIR=./migrations dbmate status"
+    "db:status:prod": "cross-env DBMATE_MIGRATIONS_DIR=./migrations dbmate status",
+    "db:rollback:prod": "cross-env DBMATE_MIGRATIONS_DIR=./migrations dbmate down"
   },
   "packageManager": "pnpm@10.28.1",
   "dependencies": {
