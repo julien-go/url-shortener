@@ -17,13 +17,13 @@ export function LinkStatsHeader({
     <div className="space-y-3">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-[2.15rem]">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-[2.15rem]">
             Link statistics
           </h1>
           <p className="text-sm text-muted-foreground">
             <Link
               to="/links"
-              className="underline decoration-primary/60 underline-offset-4 hover:text-foreground"
+              className="font-semibold text-primary underline transition-opacity hover:opacity-70"
             >
               Back to my links
             </Link>
@@ -40,8 +40,18 @@ export function LinkStatsHeader({
               onRangeChange(rangeValue as StatsRange);
             }}
           >
-            <ToggleGroupItem value="DAYS_7">7 days</ToggleGroupItem>
-            <ToggleGroupItem value="DAYS_30">30 days</ToggleGroupItem>
+            <ToggleGroupItem
+              value="DAYS_7"
+              className="data-[state=on]:bg-primary/12 data-[state=on]:text-primary"
+            >
+              7 days
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="DAYS_30"
+              className="data-[state=on]:bg-primary/12 data-[state=on]:text-primary"
+            >
+              30 days
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
       </div>

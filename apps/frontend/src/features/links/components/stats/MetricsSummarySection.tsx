@@ -15,16 +15,20 @@ export function MetricsSummarySection({
   isLoading: boolean;
 }) {
   return (
-    <section className="grid gap-4 border-b border-border/70 pb-5 md:grid-cols-2">
-      <div className="space-y-1">
-        <div className="text-sm text-muted-foreground">Total clicks</div>
-        <div className="text-3xl font-bold leading-tight">
+    <section className="grid gap-4 md:grid-cols-2">
+      <div className="space-y-2 rounded-xl border border-border bg-card p-6 sm:p-7">
+        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          Total clicks
+        </div>
+        <div className="font-display text-4xl font-extrabold leading-tight text-primary">
           {totalClicks ?? (isLoading ? "…" : "—")}
         </div>
       </div>
-      <div className="space-y-1 md:border-l md:border-border/70 md:pl-5">
-        <div className="text-sm text-muted-foreground">Last click</div>
-        <div className="text-2xl font-semibold leading-tight md:text-[1.65rem]">
+      <div className="space-y-2 rounded-xl border border-border bg-card p-6 sm:p-7">
+        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          Last click
+        </div>
+        <div className="font-display text-[1.375rem] font-extrabold leading-tight">
           {lastClickedAt !== undefined
             ? formatLastClickedAt(lastClickedAt)
             : isLoading

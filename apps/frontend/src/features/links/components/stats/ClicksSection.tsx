@@ -1,4 +1,5 @@
 import { Button } from "../../../../components/ui/button";
+import { ErrorBanner } from "../../../../components/ui/error-banner";
 import { ClicksBarChart } from "./ClicksBarChart";
 import type { LinkSeriesItem } from "./types";
 
@@ -22,12 +23,13 @@ export function ClicksSection({
   onRefresh: () => void;
 }) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-4 rounded-xl border border-border bg-card p-6 sm:p-7">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">Clicks per day</h2>
+        <h2 className="text-base font-bold">Clicks per day</h2>
         <Button
           variant="outline"
           size="sm"
+          className="bg-card hover:bg-accent"
           onClick={onRefresh}
           disabled={isFetching}
         >
@@ -36,14 +38,12 @@ export function ClicksSection({
       </div>
 
       {queryError ? (
-        <div className="space-y-2">
-          <div role="alert" className="text-sm text-destructive">
-            Failed to load statistics.
-          </div>
-          <Button variant="outline" onClick={onRefresh}>
+        <ErrorBanner>
+          <p>Failed to load statistics.</p>
+          <Button variant="outline" size="sm" onClick={onRefresh}>
             Retry
           </Button>
-        </div>
+        </ErrorBanner>
       ) : series.length === 0 ? (
         <div className="text-sm text-muted-foreground">
           No clicks yet. Share your link to get started.
