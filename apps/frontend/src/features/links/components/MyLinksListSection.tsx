@@ -81,19 +81,19 @@ export function MyLinksListSection({
           </TableCaption>
           <TableHeader>
             <TableRow className="border-b border-border bg-primary/7 hover:bg-primary/7">
-              <TableHead className="w-[320px] px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
+              <TableHead className="w-64 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Short link
               </TableHead>
               <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Original URL
               </TableHead>
-              <TableHead className="w-27.5 px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-primary">
+              <TableHead className="w-24 px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-primary">
                 Clicks
               </TableHead>
-              <TableHead className="w-35 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
+              <TableHead className="w-28 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Created
               </TableHead>
-              <TableHead className="w-55 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
+              <TableHead className="w-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Actions
               </TableHead>
             </TableRow>

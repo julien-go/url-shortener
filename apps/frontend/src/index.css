@@ -26,6 +26,7 @@
   --input: #d1cbba;
   --ring: #1f6f5c;
   --shadow-surface: 0 14px 34px rgba(36, 33, 27, 0.1);
+  --shadow-input: inset 0 1px 2px rgba(36, 33, 27, 0.06);
 
   --chart-1: #1f6f5c;
 }

@@ -60,17 +60,17 @@ export function LinkCard({
 
       <div className="flex items-center gap-2 border-t border-border pt-3.5">
         <Button
-          variant="outline"
+          variant="surface"
           size="sm"
-          className="min-h-9 flex-1 bg-card hover:bg-accent"
+          className="min-h-9 flex-1"
           onClick={() => onStats(link.id)}
         >
           Statistics
         </Button>
         <Button
-          variant="outline"
+          variant="surface"
           size="icon"
-          className="h-9 w-9 shrink-0 bg-card text-foreground hover:bg-accent"
+          className="h-9 w-9 shrink-0 text-foreground"
           onClick={() => onCopy(link.shortLink)}
           aria-label={`Copy short link ${link.code}`}
         >

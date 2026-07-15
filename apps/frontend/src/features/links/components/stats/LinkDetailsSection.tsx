@@ -14,6 +14,7 @@ export function LinkDetailsSection({
 }) {
   return (
     <section className="space-y-4 rounded-xl border border-border bg-card p-6 sm:p-7">
+      <h2 className="sr-only">Link details</h2>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         {queryError ? (
           <ErrorBanner className="flex-1">
@@ -55,24 +56,25 @@ export function LinkDetailsSection({
 
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
           <Button
-            variant="outline"
+            variant="surface"
             size="sm"
-            className="bg-card hover:bg-accent"
             onClick={onCopy}
             disabled={!linkDetails?.shortLink}
           >
             Copy
           </Button>
 
-          <Button asChild size="sm" disabled={!linkDetails?.shortLink}>
-            <a
-              href={linkDetails?.shortLink ?? "#"}
-              target="_blank"
-              rel="noreferrer"
-            >
+          {linkDetails?.shortLink ? (
+            <Button asChild size="sm">
+              <a href={linkDetails.shortLink} target="_blank" rel="noreferrer">
+                Open
+              </a>
+            </Button>
+          ) : (
+            <Button size="sm" disabled>
               Open
-            </a>
-          </Button>
+            </Button>
+          )}
         </div>
       </div>
     </section>

@@ -26,6 +26,11 @@ function navLinkClass(compact: boolean) {
       : `focus-premium rounded-md ${padding} font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground`;
 }
 
+function getAccountLabel(meQuery: ReturnType<typeof useMe>) {
+  if (meQuery.isLoading) return "Loading…";
+  return meQuery.data ? meQuery.data.email : "Signed in";
+}
+
 export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
   const { logout } = useAuth();
   const meQuery = useMe();
@@ -44,7 +49,6 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
         className={`mx-auto w-full ${getMaxWidthClass(maxWidth)} space-y-10`}
       >
         <header className="sticky top-0 z-30 border-b border-border bg-background py-3 md:py-5">
-          {/* Mobile: two fixed rows (logo+primary action, then tabs+secondary item) — no reflow. */}
           <div className="flex flex-col gap-2.5 md:hidden">
             <div className="flex items-center justify-between">
               <Link
@@ -65,7 +69,10 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 text-sm">
+            <nav
+              aria-label="Primary"
+              className="flex items-center gap-1.5 text-sm"
+            >
               <NavLink
                 to="/"
                 end
@@ -96,17 +103,12 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                   variant="secondary"
                   className="ml-auto max-w-32 truncate rounded-full px-2.5 py-1 text-xs"
                 >
-                  {meQuery.isLoading
-                    ? "Loading…"
-                    : meQuery.data
-                      ? meQuery.data.email
-                      : "Signed in"}
+                  {getAccountLabel(meQuery)}
                 </Badge>
               )}
-            </div>
+            </nav>
           </div>
 
-          {/* Desktop: single row, logo+tabs left, auth actions right. */}
           <div className="hidden md:flex md:items-center md:justify-between">
             <div className="flex items-center gap-8">
               <Link
@@ -140,13 +142,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
               </div>
             ) : (
               <div className="flex items-center gap-2.5">
-                <Badge variant="secondary">
-                  {meQuery.isLoading
-                    ? "Loading…"
-                    : meQuery.data
-                      ? meQuery.data.email
-                      : "Signed in"}
-                </Badge>
+                <Badge variant="secondary">{getAccountLabel(meQuery)}</Badge>
                 <Button variant="outline" onClick={() => void logout()}>
                   Sign out
                 </Button>
