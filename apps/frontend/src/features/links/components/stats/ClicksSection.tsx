@@ -27,9 +27,8 @@ export function ClicksSection({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-bold">Clicks per day</h2>
         <Button
-          variant="outline"
+          variant="surface"
           size="sm"
-          className="bg-card hover:bg-accent"
           onClick={onRefresh}
           disabled={isFetching}
         >

@@ -22,7 +22,7 @@ export function LinkRow({
           target="_blank"
           rel="noreferrer"
           aria-label={`${link.shortLink}`}
-          className="focus-premium block max-w-60 truncate rounded-md text-sm font-semibold text-primary transition-opacity hover:opacity-60"
+          className="focus-premium block max-w-56 truncate rounded-md text-sm font-semibold text-primary transition-opacity hover:opacity-60"
           title={link.shortLink}
         >
           {link.shortLink}
@@ -52,18 +52,17 @@ export function LinkRow({
       <TableCell className="px-4 py-2.5 align-top">
         <div className="flex justify-end gap-2">
           <Button
-            variant="outline"
+            variant="surface"
             size="sm"
-            className="bg-card hover:bg-accent"
             onClick={() => onStats(link.id)}
             aria-label={`View statistics for ${link.code}`}
           >
             Statistics
           </Button>
           <Button
-            variant="outline"
+            variant="surface"
             size="icon"
-            className="h-8 w-8 bg-card text-foreground hover:bg-accent"
+            className="h-8 w-8 text-foreground"
             onClick={() => onCopy(link.shortLink)}
             aria-label={`Copy short link ${link.code}`}
           >
