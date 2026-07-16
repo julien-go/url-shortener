@@ -16,7 +16,7 @@ export function LinkRow({
 }: LinkItemProps) {
   return (
     <TableRow>
-      <TableCell className="px-4 py-2.5 align-top">
+      <TableCell className="px-4 py-2.5">
         <a
           href={link.shortLink}
           target="_blank"
@@ -28,7 +28,7 @@ export function LinkRow({
           {link.shortLink}
         </a>
       </TableCell>
-      <TableCell className="px-4 py-2.5 align-top">
+      <TableCell className="px-4 py-2.5">
         <a
           href={link.originalUrl}
           target="_blank"
@@ -41,15 +41,15 @@ export function LinkRow({
         </a>
       </TableCell>
 
-      <TableCell className="px-4 py-2.5 text-right font-semibold tabular-nums align-top">
+      <TableCell className="px-4 py-2.5 text-right font-semibold tabular-nums">
         {link.clickCount}
       </TableCell>
 
-      <TableCell className="px-4 py-2.5 text-sm text-muted-foreground align-top">
+      <TableCell className="px-4 py-2.5 text-sm text-muted-foreground">
         {formatDateLabel(link.createdAt)}
       </TableCell>
 
-      <TableCell className="px-4 py-2.5 align-top">
+      <TableCell className="px-4 py-2.5">
         <div className="flex justify-end gap-2">
           <Button
             variant="surface"

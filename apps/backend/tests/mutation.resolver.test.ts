@@ -141,7 +141,7 @@ describe("mutationResolvers", () => {
       const ctx = makeCtx();
       const result = await mutationResolvers.register(
         null,
-        { input: { email: "a@b.com", password: "correct horse" } },
+        { input: { email: "a@b.com", password: "Correct-horse1" } },
         ctx,
       );
 
@@ -164,7 +164,7 @@ describe("mutationResolvers", () => {
       await expect(
         mutationResolvers.register(
           null,
-          { input: { email: "a@b.com", password: "correct horse" } },
+          { input: { email: "a@b.com", password: "Correct-horse1" } },
           makeCtx(),
         ),
       ).rejects.toMatchObject({
@@ -179,7 +179,7 @@ describe("mutationResolvers", () => {
       await expect(
         mutationResolvers.register(
           null,
-          { input: { email: "a@b.com", password: "correct horse" } },
+          { input: { email: "a@b.com", password: "Correct-horse1" } },
           makeCtx(),
         ),
       ).rejects.toMatchObject({

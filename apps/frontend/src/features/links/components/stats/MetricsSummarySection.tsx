@@ -20,7 +20,7 @@ export function MetricsSummarySection({
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Total clicks
         </div>
-        <div className="font-display text-4xl font-extrabold leading-tight text-primary">
+        <div className="font-display text-4xl font-extrabold leading-tight tabular-nums text-ocre-strong">
           {totalClicks ?? (isLoading ? "…" : "—")}
         </div>
       </div>

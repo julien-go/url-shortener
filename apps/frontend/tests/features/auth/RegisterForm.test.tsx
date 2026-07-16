@@ -59,7 +59,10 @@ describe("RegisterForm", () => {
     });
 
     fireEvent.change(screen.getByLabelText("Password"), {
-      target: { value: "secretPassword" },
+      target: { value: "Correct-horse1" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm password"), {
+      target: { value: "Correct-horse1" },
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
@@ -73,7 +76,7 @@ describe("RegisterForm", () => {
 
       expect(body.variables.input).toEqual({
         email: "test@example.com",
-        password: "secretPassword",
+        password: "Correct-horse1",
       });
     });
 
@@ -111,10 +114,117 @@ describe("RegisterForm", () => {
       target: { value: "test@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
-      target: { value: "secretPassword" },
+      target: { value: "Correct-horse1" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm password"), {
+      target: { value: "Correct-horse1" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(await screen.findByText("Email already used")).toBeInTheDocument();
+  });
+
+  it("blocks submission when password confirmation does not match", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    render(
+      <MemoryRouter initialEntries={["/register"]}>
+        <QueryClientProvider client={createQueryClient()}>
+          <AuthContext.Provider
+            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
+          >
+            <Routes>
+              <Route path="/register" element={<RegisterForm />} />
+            </Routes>
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "Correct-horse1" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm password"), {
+      target: { value: "Different-horse2" },
+    });
+
+    expect(
+      await screen.findByText("Passwords do not match"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create account" }),
+    ).toBeDisabled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("blocks submission when password is too short", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    render(
+      <MemoryRouter initialEntries={["/register"]}>
+        <QueryClientProvider client={createQueryClient()}>
+          <AuthContext.Provider
+            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
+          >
+            <Routes>
+              <Route path="/register" element={<RegisterForm />} />
+            </Routes>
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "short" },
+    });
+
+    expect(
+      await screen.findByText("Password must be at least 8 characters"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create account" }),
+    ).toBeDisabled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("blocks submission when password lacks required complexity", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    render(
+      <MemoryRouter initialEntries={["/register"]}>
+        <QueryClientProvider client={createQueryClient()}>
+          <AuthContext.Provider
+            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
+          >
+            <Routes>
+              <Route path="/register" element={<RegisterForm />} />
+            </Routes>
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "alllowercase" },
+    });
+
+    expect(
+      await screen.findByText(
+        "Password must include an uppercase letter, a lowercase letter, a digit, and a special character",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create account" }),
+    ).toBeDisabled();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
