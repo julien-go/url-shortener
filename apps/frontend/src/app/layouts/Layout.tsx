@@ -5,6 +5,7 @@ import { useMe } from "../../features/auth/hooks/useMe";
 
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
+import { Dot } from "../../components/ui/dot";
 import { appConfig } from "../../config/app";
 
 type LayoutProps = {
@@ -14,7 +15,7 @@ type LayoutProps = {
 
 function getMaxWidthClass(maxWidth: LayoutProps["maxWidth"]) {
   if (maxWidth === "md") return "max-w-md";
-  if (maxWidth === "lg") return "max-w-4xl";
+  if (maxWidth === "lg") return "max-w-[1400px]";
   return "max-w-5xl";
 }
 
@@ -38,7 +39,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
   const isSignedIn = Boolean(meQuery.data);
 
   return (
-    <div className="min-h-screen w-full px-3 pb-12 pt-3 sm:px-4 md:px-7 md:pt-5">
+    <div className="flex min-h-screen w-full flex-col px-3 pt-3 sm:px-4 md:px-7 md:pt-5">
       <a
         href="#main-content"
         className="focus-premium sr-only absolute left-3 top-3 z-50 rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground focus:not-sr-only"
@@ -46,7 +47,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
         Skip to main content
       </a>
       <div
-        className={`mx-auto w-full ${getMaxWidthClass(maxWidth)} space-y-10`}
+        className={`mx-auto flex w-full flex-1 flex-col ${getMaxWidthClass(maxWidth)} space-y-10`}
       >
         <header className="sticky top-0 z-30 border-b border-border bg-background py-3 md:py-5">
           <div className="flex flex-col gap-2.5 md:hidden">
@@ -56,6 +57,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                 className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.375rem] font-bold text-foreground transition hover:text-primary"
               >
                 {appConfig.appName}
+                <Dot className="ml-1.5 bg-primary align-middle" />
               </Link>
 
               {!isSignedIn ? (
@@ -63,7 +65,11 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                   <Link to="/register">Create account</Link>
                 </Button>
               ) : (
-                <Button variant="outline" size="sm" onClick={() => void logout()}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void logout()}
+                >
                   Sign out
                 </Button>
               )}
@@ -116,6 +122,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
                 className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.375rem] font-bold text-foreground transition hover:text-primary"
               >
                 {appConfig.appName}
+                <Dot className="ml-1.5 bg-primary align-middle" />
               </Link>
 
               <nav className="flex items-center gap-1.5 text-sm">
@@ -151,9 +158,13 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
           </div>
         </header>
 
-        <main id="main-content" tabIndex={-1}>
+        <main id="main-content" tabIndex={-1} className="flex-1">
           {children}
         </main>
+
+        <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} {appConfig.appName}
+        </footer>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -59,8 +60,11 @@ export function MyLinksListSection({
 
   if (links.length === 0) {
     return (
-      <div className="rounded-lg border border-border/80 bg-muted/35 p-6 text-sm text-muted-foreground">
-        No links yet.
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-border/80 bg-muted/35 p-6 text-center text-sm text-muted-foreground">
+        <p>No links yet.</p>
+        <Button asChild size="sm">
+          <Link to="/">Create a short link</Link>
+        </Button>
       </div>
     );
   }
@@ -99,7 +103,7 @@ export function MyLinksListSection({
             </TableRow>
           </TableHeader>
 
-          <TableBody>
+          <TableBody className="[&_tr:hover]:bg-primary/4">
             {links.map((link) => (
               <LinkRow key={link.id} link={link} {...rowProps(link.id)} />
             ))}
