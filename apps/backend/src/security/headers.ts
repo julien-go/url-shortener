@@ -2,25 +2,16 @@ import type { RequestHandler } from "express";
 import { env } from "../config/env";
 
 function buildCspValue() {
-  if (env.NODE_ENV === "development") {
-    return [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
-      `connect-src 'self' ${env.FRONTEND_ORIGIN}`,
-      "img-src 'self' data:",
-      "object-src 'none'",
-      "frame-ancestors 'none'",
-      "base-uri 'none'",
-    ].join("; ");
-  }
+  const isDev = env.NODE_ENV === "development";
 
   return [
     "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self'",
+    isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self'",
+    isDev ? "style-src 'self' 'unsafe-inline'" : "style-src 'self'",
     "img-src 'self' data:",
-    "connect-src 'self'",
+    isDev ? `connect-src 'self' ${env.FRONTEND_ORIGIN}` : "connect-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
     "base-uri 'none'",

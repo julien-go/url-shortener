@@ -1,7 +1,7 @@
 // Mirrors apps/backend/src/modules/auth/auth.schema.ts's registerInputSchema password rule — keep both in sync.
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 72;
-export const PASSWORD_COMPLEXITY_REGEX =
+const PASSWORD_COMPLEXITY_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!"#$%&'()*+,\-./:;<=>?@[\]^_`{|}~]).+$/;
 
 export function getPasswordValidationError(password: string): string | null {
