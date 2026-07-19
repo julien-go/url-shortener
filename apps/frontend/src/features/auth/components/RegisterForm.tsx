@@ -6,6 +6,12 @@ import { useAuth } from "../../../app/providers/useAuth";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { ErrorBanner } from "../../../components/ui/error-banner";
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  getPasswordValidationError,
+} from "./password";
 
 export function RegisterForm() {
   const navigate = useNavigate();
@@ -15,11 +21,18 @@ export function RegisterForm() {
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
   const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const passwordValidationError = getPasswordValidationError(password);
+  const passwordsMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword;
+  const canSubmit = !passwordValidationError && !passwordsMismatch;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+
+    if (!canSubmit) return;
 
     try {
       await registerMutation.mutateAsync({ email, password });
@@ -30,11 +43,18 @@ export function RegisterForm() {
     }
   }
 
-  const errorMessage = registerMutation.isError
+  const mutationErrorMessage = registerMutation.isError
     ? registerMutation.error instanceof Error
       ? registerMutation.error.message
       : "Registration failed"
     : null;
+
+  const errorMessage =
+    passwordValidationError ??
+    (passwordsMismatch ? "Passwords do not match" : mutationErrorMessage);
+
+  const passwordFieldError = passwordValidationError || mutationErrorMessage;
+  const confirmPasswordFieldError = passwordsMismatch || mutationErrorMessage;
 
   return (
     <form
@@ -50,8 +70,10 @@ export function RegisterForm() {
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
           placeholder="you@example.com"
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? "register-form-error" : undefined}
+          aria-invalid={Boolean(mutationErrorMessage)}
+          aria-describedby={
+            mutationErrorMessage ? "register-form-error" : undefined
+          }
           required
         />
       </div>
@@ -65,9 +87,31 @@ export function RegisterForm() {
           type="password"
           autoComplete="new-password"
           placeholder="••••••••"
-          minLength={8}
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? "register-form-error" : undefined}
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
+          aria-invalid={Boolean(passwordFieldError)}
+          aria-describedby={
+            passwordFieldError ? "register-form-error" : undefined
+          }
+          required
+        />
+      </div>
+
+      <div className="mb-5 flex flex-col gap-y-1.5 space-y-2 sm:mb-6">
+        <Label htmlFor="confirm-password">Confirm password</Label>
+        <Input
+          id="confirm-password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          type="password"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
+          aria-invalid={Boolean(confirmPasswordFieldError)}
+          aria-describedby={
+            confirmPasswordFieldError ? "register-form-error" : undefined
+          }
           required
         />
       </div>
@@ -75,24 +119,21 @@ export function RegisterForm() {
       <Button
         className="w-full"
         type="submit"
-        disabled={registerMutation.isPending}
+        disabled={registerMutation.isPending || !canSubmit}
       >
         {registerMutation.isPending ? "Creating..." : "Create account"}
       </Button>
 
       {errorMessage ? (
-        <p
-          id="register-form-error"
-          role="alert"
-          className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {errorMessage}
-        </p>
+        <ErrorBanner id="register-form-error">{errorMessage}</ErrorBanner>
       ) : null}
 
       <p className="pt-1 text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link to="/login" className="underline hover:text-foreground">
+        <Link
+          to="/login"
+          className="font-semibold text-primary underline transition-opacity hover:opacity-60"
+        >
           Sign in
         </Link>
       </p>

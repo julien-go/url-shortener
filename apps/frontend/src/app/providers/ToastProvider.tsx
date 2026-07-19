@@ -1,10 +1,17 @@
 import * as React from "react";
+import { CheckCircle2, AlertCircle, Info } from "lucide-react";
 import {
   ToastContext,
   type ToastContextValue,
   type ToastItem,
 } from "./toastContext";
 import { cn } from "../../lib/utils";
+
+const TOAST_ICONS = {
+  success: CheckCircle2,
+  error: AlertCircle,
+  info: Info,
+} as const;
 
 const DISMISS_MS = 2500;
 
@@ -34,23 +41,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         aria-live="polite"
         className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4"
       >
-        {toasts.map((item) => (
-          <div
-            key={item.id}
-            role={item.variant === "error" ? "alert" : "status"}
-            className={cn(
-              "pointer-events-auto w-full max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg",
-              item.variant === "success" &&
-                "border-primary/30 bg-primary/10 text-foreground",
-              item.variant === "error" &&
-                "border-destructive/30 bg-destructive/10 text-destructive",
-              item.variant === "info" &&
-                "border-border/70 bg-background text-foreground",
-            )}
-          >
-            {item.message}
-          </div>
-        ))}
+        {toasts.map((item) => {
+          const Icon = TOAST_ICONS[item.variant];
+          return (
+            <div
+              key={item.id}
+              role={item.variant === "error" ? "alert" : "status"}
+              className={cn(
+                "pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-lg border px-4 py-3 text-sm font-medium shadow-lg",
+                item.variant === "success" &&
+                  "border-primary bg-primary text-primary-foreground",
+                item.variant === "error" &&
+                  "border-destructive bg-destructive text-destructive-foreground",
+                item.variant === "info" &&
+                  "border-border bg-card text-foreground",
+              )}
+            >
+              <Icon className="mt-0.5 size-4 shrink-0" />
+              <span>{item.message}</span>
+            </div>
+          );
+        })}
       </div>
     </ToastContext.Provider>
   );
