@@ -8,6 +8,7 @@ import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Separator } from "../../../components/ui/separator";
+import { ErrorBanner } from "../../../components/ui/error-banner";
 
 export function CreateShortUrlForm() {
   const [originalUrl, setOriginalUrl] = React.useState("");
@@ -49,7 +50,7 @@ export function CreateShortUrlForm() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
-        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-3xl md:text-[2.25rem]">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-3xl md:text-[2.25rem]">
           Create a short link
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -103,20 +104,16 @@ export function CreateShortUrlForm() {
         </Button>
 
         {errorMessage ? (
-          <p
-            id="create-short-link-error"
-            role="alert"
-            className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
+          <ErrorBanner id="create-short-link-error">
             {errorMessage}
-          </p>
+          </ErrorBanner>
         ) : null}
       </form>
 
       {created ? (
         <div className="border-t border-border/80 pt-4 sm:pt-5">
           <div className="space-y-3">
-            <div className="text-sm font-medium text-muted-foreground">
+            <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Short link
             </div>
 
@@ -135,7 +132,7 @@ export function CreateShortUrlForm() {
               <Button variant="outline" onClick={copyCreatedLink}>
                 Copy
               </Button>
-              <Button asChild variant="secondary">
+              <Button asChild>
                 <a href={created.shortLink} target="_blank" rel="noreferrer">
                   Open
                 </a>

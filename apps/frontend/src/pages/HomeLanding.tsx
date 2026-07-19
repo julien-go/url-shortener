@@ -1,42 +1,99 @@
 import type { ReactNode } from "react";
 import { appConfig } from "../config/app";
 import { useDocumentTitle } from "../lib/hooks/useDocumentTitle";
+import { cn } from "../lib/utils";
+import { Dot } from "../components/ui/dot";
 
-function FeatureBadge({ children }: { children: ReactNode }) {
+function FeatureTag({
+  children,
+  dotClassName,
+  hoverClassName,
+}: {
+  children: ReactNode;
+  dotClassName: string;
+  hoverClassName: string;
+}) {
   return (
-    <div
-      className={`inline-flex items-center justify-center rounded-full
-        border border-primary/30 bg-primary/8 px-3.5 py-1.5 text-sm
-        font-medium text-primary transition-colors duration-200
-        hover:bg-primary/14`}
+    <span
+      className={cn(
+        "inline-flex cursor-default items-center gap-1.5 rounded-full border border-foreground/15 px-3.5 py-2 text-[0.8125rem] font-semibold text-foreground transition-colors duration-150 lg:px-4 lg:text-sm",
+        hoverClassName,
+      )}
     >
+      <Dot className={dotClassName} />
       {children}
+    </span>
+  );
+}
+
+const CLICKS_PER_DAY = [15, 30, 20, 55, 35, 70, 45, 100];
+const FULL_OPACITY_DAYS = new Set([3, 5, 7]);
+
+function ExampleChart() {
+  return (
+    <div className="px-6 py-5 sm:px-7">
+      <p className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        Clicks per day
+      </p>
+      <div className="flex h-16 items-end gap-2">
+        {CLICKS_PER_DAY.map((height, index) => (
+          <div
+            key={index}
+            className="flex-1 rounded-t-[3px] bg-primary"
+            style={{
+              height: `${height}%`,
+              opacity: FULL_OPACITY_DAYS.has(index)
+                ? 1
+                : index === 6
+                  ? 0.4
+                  : 0.25,
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
 function ExamplePreview() {
   return (
-    <div
-      className={`mx-auto mt-7 flex w-full min-w-0 max-w-2xl flex-col
-        gap-2.5 rounded-xl border border-border bg-card/96 p-4 text-left
-        shadow-(--shadow-surface) sm:p-5`}
-    >
-      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-        example
-      </p>
-      <p className="mt-1 min-w-0 truncate text-sm text-muted-foreground/72">
-        https://example.com/a-long-example-link-that-could-be-shortened-to-make-sharing-easier
-      </p>
-      <p className="mt-1 text-base font-semibold leading-none text-foreground/85">
-        ↓
-      </p>
-      <p className="mt-1 break-all font-mono text-[1.35rem] font-extrabold text-primary sm:text-[1.7rem]">
-        {`${appConfig.siteUrl}/example`}
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        128 clicks · Last click 3m ago
-      </p>
+    <div className="mx-auto w-full max-w-130 overflow-hidden rounded-xl border-[1.5px] border-foreground/10 bg-card text-left shadow-[0_24px_48px_rgba(36,33,27,0.14)] transition-[border-color,box-shadow] duration-450 hover:border-primary hover:shadow-[0_18px_32px_rgba(31,111,92,0.12)] lg:mx-0 lg:max-w-none">
+      <div className="flex items-center justify-between border-b border-border/70 px-6 py-4 sm:px-7">
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+          Example
+        </p>
+        <Dot className="bg-primary" />
+      </div>
+
+      <div className="px-6 py-5 sm:px-7">
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          Original URL
+        </p>
+        <p className="mt-1.5 truncate text-sm text-muted-foreground">
+          https://example.com/a-long-example-link
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 bg-primary/6 px-6 py-5 sm:px-7">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Short link
+          </p>
+          <p className="font-display mt-1 truncate text-base font-extrabold text-primary sm:text-2xl">
+            {`${appConfig.siteUrl}/example`}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Clicks
+          </p>
+          <p className="font-display mt-1 text-xl font-extrabold tabular-nums text-ocre-strong sm:text-2xl">
+            128
+          </p>
+        </div>
+      </div>
+
+      <ExampleChart />
     </div>
   );
 }
@@ -48,38 +105,35 @@ export function HomeLanding() {
   );
 
   return (
-    <section
-      className={`mt-10 flex min-h-[60vh] min-w-0 flex-col justify-center
-        space-y-6 sm:mt-12 md:mt-15 md:space-y-9`}
-    >
-      <div
-        className={`relative mx-auto w-full min-w-0 max-w-3xl overflow-hidden
-          px-1 py-3 text-center sm:px-2 sm:py-4 md:py-5`}
-      >
-        <div className="relative mx-auto w-full max-w-2xl space-y-4.5">
-          <div className="mb-10">
-            <h1
-              className={`font-display mx-auto max-w-3xl text-[2rem]
-                font-black tracking-[-0.045em] text-foreground sm:text-5xl
-                md:text-[4.15rem] md:leading-[0.9]`}
-            >
-              Shorten URLs,
-              <br />
-              instantly.
-            </h1>
-            <p className="mt-5 mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Create short URLs and manage them from a clean interface.
-            </p>
-          </div>
-          <div className="mb-8 mt-4 flex justify-center">
-            <div className="flex w-full flex-wrap items-center justify-center gap-2.5 sm:w-fit sm:gap-3">
-              <FeatureBadge>Custom slugs</FeatureBadge>
-              <FeatureBadge>Click tracking</FeatureBadge>
-            </div>
-          </div>
+    <section className="bg-noise mt-10 flex min-h-[60vh] min-w-0 flex-col justify-center sm:mt-12 md:mt-15">
+      <div className="relative mx-auto grid w-full min-w-0 max-w-3xl items-center gap-10 px-1 py-3 text-center sm:px-2 sm:py-4 md:py-5 lg:max-w-none lg:grid-cols-2 lg:gap-14 lg:px-40 lg:py-22 lg:text-left">
+        <div>
+          <h1 className="font-display mx-auto max-w-3xl text-[2rem] font-extrabold leading-[1.05] text-foreground sm:text-5xl md:text-[3.75rem] lg:mx-0 lg:text-[4rem]">
+            Shorten URLs,
+            <br />
+            <span className="text-primary">instantly.</span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-110 text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0 lg:max-w-116">
+            Create short URLs and manage them from a clean interface.
+          </p>
 
-          <ExamplePreview />
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+            <FeatureTag
+              dotClassName="bg-primary"
+              hoverClassName="hover:border-primary hover:text-primary"
+            >
+              Custom slugs
+            </FeatureTag>
+            <FeatureTag
+              dotClassName="bg-ocre"
+              hoverClassName="hover:border-ocre-strong hover:text-ocre-strong"
+            >
+              Click tracking
+            </FeatureTag>
+          </div>
         </div>
+
+        <ExamplePreview />
       </div>
     </section>
   );

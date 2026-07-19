@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -8,6 +9,7 @@ import {
 } from "../../../components/ui/table";
 import { Button } from "../../../components/ui/button";
 import { Skeleton } from "../../../components/ui/skeleton";
+import { ErrorBanner } from "../../../components/ui/error-banner";
 import { LinkCard } from "./LinkCard";
 import { LinkRow } from "./LinkRow";
 import type { MyLink } from "../api/types";
@@ -47,68 +49,63 @@ export function MyLinksListSection({
 
   if (isError) {
     return (
-      <div
-        role="alert"
-        className="space-y-2 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive"
-      >
+      <ErrorBanner>
         <p>{errorMessage}</p>
         <Button variant="outline" size="sm" onClick={onRetry}>
           Retry
         </Button>
-      </div>
+      </ErrorBanner>
     );
   }
 
   if (links.length === 0) {
     return (
-      <div className="rounded-lg border border-border/80 bg-muted/35 p-6 text-sm text-muted-foreground">
-        No links yet.
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-border/80 bg-muted/35 p-6 text-center text-sm text-muted-foreground">
+        <p>No links yet.</p>
+        <Button asChild size="sm">
+          <Link to="/">Create a short link</Link>
+        </Button>
       </div>
     );
   }
 
   return (
     <>
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         {links.map((link) => (
           <LinkCard key={link.id} link={link} {...rowProps(link.id)} />
         ))}
       </div>
 
-      <div className="hidden overflow-hidden rounded-lg bg-background/35 md:block">
-        <Table className="border-y border-border/65">
+      <div className="hidden overflow-hidden rounded-xl border border-border bg-card lg:block">
+        <Table>
           <TableCaption className="sr-only">
             List of your short links with their target URLs, click counts,
             creation dates, and row actions.
           </TableCaption>
           <TableHeader>
-            <TableRow className="border-b border-border/70 bg-primary/10">
-              <TableHead className="w-[320px] px-4 py-3 text-foreground">
+            <TableRow className="border-b border-border bg-primary/7 hover:bg-primary/7">
+              <TableHead className="w-64 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Short link
               </TableHead>
-              <TableHead className="px-4 py-3 text-foreground">
+              <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Original URL
               </TableHead>
-              <TableHead className="w-27.5 px-4 py-3 text-right text-foreground">
+              <TableHead className="w-24 px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-primary">
                 Clicks
               </TableHead>
-              <TableHead className="w-35 px-4 py-3 text-foreground">
+              <TableHead className="w-28 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Created
               </TableHead>
-              <TableHead className="w-55 px-4 py-3  text-foreground">
+              <TableHead className="w-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-primary">
                 Actions
               </TableHead>
             </TableRow>
           </TableHeader>
 
-          <TableBody>
-            {links.map((link, index) => (
-              <LinkRow
-                key={link.id}
-                link={link}
-                index={index}
-                {...rowProps(link.id)}
-              />
+          <TableBody className="[&_tr:hover]:bg-primary/4">
+            {links.map((link) => (
+              <LinkRow key={link.id} link={link} {...rowProps(link.id)} />
             ))}
           </TableBody>
         </Table>

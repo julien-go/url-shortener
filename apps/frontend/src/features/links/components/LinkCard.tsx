@@ -1,3 +1,4 @@
+import { Copy, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { formatDateLabel, type LinkItemProps } from "./linkList";
@@ -13,7 +14,7 @@ export function LinkCard({
   onConfirmDelete,
 }: LinkItemProps) {
   return (
-    <article className="space-y-3 rounded-lg border border-border/80 bg-background p-4">
+    <article className="space-y-3 rounded-xl border border-border bg-card p-4">
       <div className="space-y-1.5">
         <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
           Short link
@@ -23,7 +24,7 @@ export function LinkCard({
           target="_blank"
           rel="noreferrer"
           aria-label={`${link.shortLink}`}
-          className="focus-premium block break-all rounded-md text-sm font-medium underline decoration-primary/60 underline-offset-4 transition hover:text-primary"
+          className="focus-premium block break-all rounded-md text-sm font-semibold text-primary transition-opacity hover:opacity-60"
         >
           {link.shortLink}
         </a>
@@ -57,31 +58,33 @@ export function LinkCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex items-center gap-2 border-t border-border pt-3.5">
         <Button
-          variant="secondary"
+          variant="surface"
           size="sm"
-          className="min-h-11"
+          className="min-h-9 flex-1"
           onClick={() => onStats(link.id)}
         >
           Statistics
         </Button>
         <Button
-          variant="outline"
-          size="sm"
-          className="min-h-11"
+          variant="surface"
+          size="icon"
+          className="h-9 w-9 shrink-0 text-foreground"
           onClick={() => onCopy(link.shortLink)}
+          aria-label={`Copy short link ${link.code}`}
         >
-          Copy
+          <Copy className="size-4" />
         </Button>
         <Button
-          variant="ghost"
-          size="sm"
-          className="col-span-2 min-h-11 text-destructive/85 hover:text-destructive"
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 shrink-0 border-destructive/40 bg-destructive/12 text-destructive hover:bg-destructive/22"
           onClick={() => onStartDelete(link.id)}
           disabled={isDeleting}
+          aria-label={`Delete short link ${link.code}`}
         >
-          Delete
+          <Trash2 className="size-4" />
         </Button>
       </div>
 

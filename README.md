@@ -234,6 +234,7 @@ Le backend lit les agrégats `daily_clicks` et retourne les clics par jour, le t
 ## Sécurité
 
 - Validation d’entrée avec Zod
+- Mot de passe : 8 à 72 caractères, avec majuscule, minuscule, chiffre et caractère spécial (règle dupliquée côté frontend pour un retour instantané, et revalidée côté backend)
 - Authentification JWT (HS256) en cookie HttpOnly
 - Invalidation de session via `token_version`
 - Register résistant à l’énumération de comptes (message générique, timing constant)

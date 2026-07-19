@@ -5,7 +5,7 @@ import { useMe } from "../../features/auth/hooks/useMe";
 
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { Separator } from "../../components/ui/separator";
+import { Dot } from "../../components/ui/dot";
 import { appConfig } from "../../config/app";
 
 type LayoutProps = {
@@ -15,8 +15,21 @@ type LayoutProps = {
 
 function getMaxWidthClass(maxWidth: LayoutProps["maxWidth"]) {
   if (maxWidth === "md") return "max-w-md";
-  if (maxWidth === "lg") return "max-w-4xl";
+  if (maxWidth === "lg") return "max-w-[1400px]";
   return "max-w-5xl";
+}
+
+function navLinkClass(compact: boolean) {
+  const padding = compact ? "px-3 py-1.5" : "px-4 py-2";
+  return ({ isActive }: { isActive: boolean }) =>
+    isActive
+      ? `focus-premium rounded-md bg-primary/12 ${padding} font-semibold text-primary transition hover:bg-primary/20`
+      : `focus-premium rounded-md ${padding} font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground`;
+}
+
+function getAccountLabel(meQuery: ReturnType<typeof useMe>) {
+  if (meQuery.isLoading) return "Loading…";
+  return meQuery.data ? meQuery.data.email : "Signed in";
 }
 
 export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
@@ -26,7 +39,7 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
   const isSignedIn = Boolean(meQuery.data);
 
   return (
-    <div className="min-h-screen w-full px-3 pb-12 pt-3 sm:px-4 md:px-7 md:pt-5">
+    <div className="flex min-h-screen w-full flex-col px-3 pt-3 sm:px-4 md:px-7 md:pt-5">
       <a
         href="#main-content"
         className="focus-premium sr-only absolute left-3 top-3 z-50 rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground focus:not-sr-only"
@@ -34,67 +47,109 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
         Skip to main content
       </a>
       <div
-        className={`mx-auto w-full ${getMaxWidthClass(maxWidth)} space-y-10`}
+        className={`mx-auto flex w-full flex-1 flex-col ${getMaxWidthClass(maxWidth)} space-y-10`}
       >
-        <header className="sticky top-0 z-30 border-b border-border/50 bg-background/45 py-3 supports-backdrop-filter:bg-background/25 supports-backdrop-filter:backdrop-blur-md md:py-5">
-          <div className="flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-col gap-2 sm:gap-2.5 md:flex-row md:flex-wrap md:items-center md:gap-4">
+        <header className="sticky top-0 z-30 border-b border-border bg-background py-3 md:py-5">
+          <div className="flex flex-col gap-2.5 md:hidden">
+            <div className="flex items-center justify-between">
               <Link
                 to="/"
-                className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.75rem] font-bold text-foreground transition hover:text-primary"
+                className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.375rem] font-bold text-foreground transition hover:text-primary"
               >
                 {appConfig.appName}
+                <Dot className="ml-1.5 bg-primary align-middle" />
               </Link>
 
-              <Separator
-                orientation="vertical"
-                className="hidden h-6 md:block"
-              />
-
-              <nav className="flex w-full items-center gap-1 overflow-x-auto rounded-lg border border-border/70 bg-background/55 p-1 text-[0.95rem] md:w-auto md:overflow-visible">
-                <NavLink
-                  to="/"
-                  end
-                  className={({ isActive }) =>
-                    isActive
-                      ? "focus-premium rounded-md bg-primary/14 px-3.5 py-2 font-semibold text-primary shadow-[inset_0_0_0_1px_rgba(108,86,255,0.28)]"
-                      : "focus-premium rounded-md px-3.5 py-2 font-medium text-muted-foreground transition hover:bg-accent/70 hover:text-foreground"
-                  }
+              {!isSignedIn ? (
+                <Button asChild size="sm">
+                  <Link to="/register">Create account</Link>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void logout()}
                 >
+                  Sign out
+                </Button>
+              )}
+            </div>
+
+            <nav
+              aria-label="Primary"
+              className="flex items-center gap-1.5 text-sm"
+            >
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `shrink-0 whitespace-nowrap ${navLinkClass(true)({ isActive })}`
+                }
+              >
+                Home
+              </NavLink>
+              <NavLink
+                to="/links"
+                className={({ isActive }) =>
+                  `shrink-0 whitespace-nowrap ${navLinkClass(true)({ isActive })}`
+                }
+              >
+                My links
+              </NavLink>
+
+              {!isSignedIn ? (
+                <Link
+                  to="/login"
+                  className="focus-premium ml-auto shrink-0 whitespace-nowrap rounded-md px-2 py-1 font-medium text-muted-foreground transition-opacity hover:opacity-60"
+                >
+                  Sign in
+                </Link>
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="ml-auto max-w-32 truncate rounded-full px-2.5 py-1 text-xs"
+                >
+                  {getAccountLabel(meQuery)}
+                </Badge>
+              )}
+            </nav>
+          </div>
+
+          <div className="hidden md:flex md:items-center md:justify-between">
+            <div className="flex items-center gap-8">
+              <Link
+                to="/"
+                className="font-display focus-premium rounded-md px-1.5 py-1 text-[1.375rem] font-bold text-foreground transition hover:text-primary"
+              >
+                {appConfig.appName}
+                <Dot className="ml-1.5 bg-primary align-middle" />
+              </Link>
+
+              <nav className="flex items-center gap-1.5 text-sm">
+                <NavLink to="/" end className={navLinkClass(false)}>
                   Home
                 </NavLink>
-
-                <NavLink
-                  to="/links"
-                  className={({ isActive }) =>
-                    isActive
-                      ? "focus-premium rounded-md bg-primary/14 px-3.5 py-2 font-semibold text-primary shadow-[inset_0_0_0_1px_rgba(108,86,255,0.28)]"
-                      : "focus-premium rounded-md px-3.5 py-2 font-medium text-muted-foreground transition hover:bg-accent/70 hover:text-foreground"
-                  }
-                >
+                <NavLink to="/links" className={navLinkClass(false)}>
                   My links
                 </NavLink>
               </nav>
             </div>
 
             {!isSignedIn ? (
-              <div className="flex w-full flex-wrap gap-2 md:w-auto md:justify-end">
-                <Button asChild variant="outline">
-                  <Link to="/login">Sign in</Link>
-                </Button>
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/login"
+                  className="focus-premium rounded-md text-sm font-semibold text-foreground transition-opacity hover:opacity-60"
+                >
+                  Sign in
+                </Link>
                 <Button asChild>
                   <Link to="/register">Create account</Link>
                 </Button>
               </div>
             ) : (
-              <div className="flex w-full flex-wrap items-center gap-2.5 md:w-auto md:justify-end">
-                <Badge variant="secondary">
-                  {meQuery.isLoading
-                    ? "Loading…"
-                    : meQuery.data
-                      ? meQuery.data.email
-                      : "Signed in"}
-                </Badge>
+              <div className="flex items-center gap-2.5">
+                <Badge variant="secondary">{getAccountLabel(meQuery)}</Badge>
                 <Button variant="outline" onClick={() => void logout()}>
                   Sign out
                 </Button>
@@ -103,9 +158,13 @@ export function Layout({ children, maxWidth = "xl" }: LayoutProps) {
           </div>
         </header>
 
-        <main id="main-content" tabIndex={-1}>
+        <main id="main-content" tabIndex={-1} className="flex-1">
           {children}
         </main>
+
+        <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} {appConfig.appName}
+        </footer>
       </div>
     </div>
   );
