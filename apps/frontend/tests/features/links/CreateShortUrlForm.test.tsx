@@ -215,6 +215,8 @@ describe("CreateShortUrlForm", () => {
       expect(writeText).toHaveBeenCalledWith("https://short.test/abc"),
     );
 
-    expect(screen.getByText("Copied to clipboard.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Copied to clipboard."),
+    ).toBeInTheDocument();
   });
 });
