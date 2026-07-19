@@ -1,7 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import type { Response } from "express";
 import { env } from "../../config/env";
 import { JwtPayload } from "./auth.types";
+import { setAuthCookie } from "../../security/authCookies";
+import type { UserRow } from "../users/users.types";
 
 const JWT_ALGORITHM = "HS256" as const;
 
@@ -40,4 +43,21 @@ export function verifyToken(token: string): JwtPayload | null {
   } catch {
     return null;
   }
+}
+
+export function issueSession(res: Response, user: UserRow) {
+  const token = signToken({
+    sub: user.id,
+    email: user.email,
+    tokenVersion: user.token_version,
+  });
+  setAuthCookie(res, token);
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      createdAt: user.created_at,
+    },
+  };
 }

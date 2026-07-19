@@ -66,10 +66,7 @@ describe("rateLimit", () => {
     it("allows requests up to max then blocks with 429", () => {
       vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
-      const { limiter, req, res, next } = setupLimiter({
-        name: "test-limiter",
-        max: 2,
-      });
+      const { limiter, req, res, next } = setupLimiter();
 
       limiter(req as never, res as never, next);
       limiter(req as never, res as never, next);

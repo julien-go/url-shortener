@@ -1,39 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RegisterForm } from "../../../src/features/auth/components/RegisterForm";
-import {
-  AuthContext,
-  AuthContextValue,
-} from "../../../src/app/providers/authContext";
-
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-}
+import type { AuthContextValue } from "../../../src/app/providers/authContext";
+import { renderAuthForm } from "./renderAuthForm";
 
 function renderRegisterForm(authOverrides: Partial<AuthContextValue> = {}) {
-  return render(
-    <MemoryRouter initialEntries={["/register"]}>
-      <QueryClientProvider client={createQueryClient()}>
-        <AuthContext.Provider
-          value={{ refreshSession: vi.fn(), logout: vi.fn(), ...authOverrides }}
-        >
-          <Routes>
-            <Route path="/register" element={<RegisterForm />} />
-            <Route path="/" element={<div>Home page</div>} />
-          </Routes>
-        </AuthContext.Provider>
-      </QueryClientProvider>
-    </MemoryRouter>,
-  );
+  return renderAuthForm("/register", <RegisterForm />, authOverrides);
 }
 
 describe("RegisterForm", () => {
