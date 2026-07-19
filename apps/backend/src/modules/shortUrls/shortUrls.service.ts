@@ -55,6 +55,42 @@ async function tryCreateShortUrl(
   }
 }
 
+async function createWithCustomCode(
+  customCode: string,
+  originalUrl: string,
+  userId: string,
+  publicBaseUrl: string,
+): Promise<CreateShortUrlResult> {
+  const result = await tryCreateShortUrl(
+    customCode,
+    originalUrl,
+    userId,
+    publicBaseUrl,
+  );
+  return result ?? { ok: false, reason: "SLUG_TAKEN" };
+}
+
+async function createWithGeneratedCode(
+  originalUrl: string,
+  userId: string,
+  publicBaseUrl: string,
+): Promise<CreateShortUrlResult> {
+  for (let attempt = 0; attempt < MAX_SLUG_RETRIES; attempt++) {
+    const code = generateRandomSlug(AUTO_SLUG_LENGTH);
+    if (RESERVED_CODES.has(code.toLowerCase())) continue;
+
+    const result = await tryCreateShortUrl(
+      code,
+      originalUrl,
+      userId,
+      publicBaseUrl,
+    );
+    if (result) return result;
+  }
+
+  throw new Error("Could not generate a unique slug after retries");
+}
+
 export async function createShortUrl(
   input: CreateShortUrlInput,
   userId: string,
@@ -73,28 +109,7 @@ export async function createShortUrl(
   const publicBaseUrl = env.PUBLIC_BASE_URL;
   if (!publicBaseUrl) throw new Error("PUBLIC_BASE_URL is not set");
 
-  if (customCode) {
-    const result = await tryCreateShortUrl(
-      customCode,
-      originalUrl,
-      userId,
-      publicBaseUrl,
-    );
-    return result ?? { ok: false, reason: "SLUG_TAKEN" };
-  }
-
-  for (let attempt = 0; attempt < MAX_SLUG_RETRIES; attempt++) {
-    const code = generateRandomSlug(AUTO_SLUG_LENGTH);
-    if (RESERVED_CODES.has(code.toLowerCase())) continue;
-
-    const result = await tryCreateShortUrl(
-      code,
-      originalUrl,
-      userId,
-      publicBaseUrl,
-    );
-    if (result) return result;
-  }
-
-  throw new Error("Could not generate a unique slug after retries");
+  return customCode
+    ? createWithCustomCode(customCode, originalUrl, userId, publicBaseUrl)
+    : createWithGeneratedCode(originalUrl, userId, publicBaseUrl);
 }

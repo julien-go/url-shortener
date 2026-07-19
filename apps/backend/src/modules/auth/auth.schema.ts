@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Mirrored in apps/frontend/src/features/auth/components/password.ts — keep both in sync.
-export const PASSWORD_COMPLEXITY_REGEX =
+const PASSWORD_COMPLEXITY_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!"#$%&'()*+,\-./:;<=>?@[\]^_`{|}~]).+$/;
 
 export const registerInputSchema = z
