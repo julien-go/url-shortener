@@ -31,6 +31,8 @@ export default [
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...reactRefresh.configs.vite.rules,
+      "max-params": ["warn", 4],
+      complexity: ["warn", 15],
     },
   },
 
