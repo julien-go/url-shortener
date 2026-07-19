@@ -1,20 +1,12 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "../../../src/features/auth/components/LoginForm";
+import type { AuthContextValue } from "../../../src/app/providers/authContext";
+import { renderAuthForm } from "./renderAuthForm";
 
-import { AuthContext } from "../../../src/app/providers/authContext";
-
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
+function renderLoginForm(authOverrides: Partial<AuthContextValue> = {}) {
+  return renderAuthForm("/login", <LoginForm />, authOverrides);
 }
 
 describe("LoginForm", () => {
@@ -42,18 +34,7 @@ describe("LoginForm", () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={["/login"]}>
-        <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider value={{ refreshSession, logout: vi.fn() }}>
-            <Routes>
-              <Route path="/login" element={<LoginForm />} />
-              <Route path="/" element={<div>Home page</div>} />
-            </Routes>
-          </AuthContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderLoginForm({ refreshSession });
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },
@@ -99,19 +80,7 @@ describe("LoginForm", () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={["/login"]}>
-        <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider
-            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
-          >
-            <Routes>
-              <Route path="/login" element={<LoginForm />} />
-            </Routes>
-          </AuthContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderLoginForm();
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },

@@ -4,14 +4,21 @@ vi.mock("../src/config/env", () => ({
   env: {
     JWT_SECRET: "test-secret",
     COOKIE_MAX_AGE_SECONDS: 604800,
+    COOKIE_NAME: "auth_token",
+    COOKIE_PATH: "/",
+    COOKIE_SAMESITE: "Lax",
+    COOKIE_SECURE: false,
+    COOKIE_DOMAIN: undefined,
     NODE_ENV: "test",
     LOG_LEVEL: "silent",
   },
 }));
 
+import type { Response } from "express";
 import {
   DUMMY_PASSWORD_HASH,
   hashPassword,
+  issueSession,
   signToken,
   verifyPassword,
   verifyToken,
@@ -61,6 +68,35 @@ describe("auth.service", () => {
       const tampered = token.slice(0, -2) + (token.endsWith("a") ? "bb" : "aa");
 
       expect(verifyToken(tampered)).toBeNull();
+    });
+  });
+
+  describe("issueSession", () => {
+    it("sets the auth cookie with a valid signed token and returns the public user shape", () => {
+      const setHeader = vi.fn();
+      const res = { setHeader } as unknown as Response;
+      const createdAt = new Date("2025-01-01T00:00:00.000Z");
+      const user = {
+        id: "user-1",
+        email: "a@b.com",
+        password_hash: "hashed",
+        token_version: 2,
+        created_at: createdAt,
+      };
+
+      const result = issueSession(res, user);
+
+      expect(result).toEqual({
+        user: { id: "user-1", email: "a@b.com", createdAt },
+      });
+
+      const [, cookieValue] = setHeader.mock.calls[0] as [string, string];
+      const token = cookieValue.split(";")[0].split("=")[1];
+      expect(verifyToken(token)).toMatchObject({
+        sub: "user-1",
+        email: "a@b.com",
+        tokenVersion: 2,
+      });
     });
   });
 });
