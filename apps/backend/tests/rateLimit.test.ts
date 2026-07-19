@@ -43,6 +43,20 @@ function makeRes(): MockRes {
   return res;
 }
 
+function setupLimiter(
+  overrides: Partial<Parameters<typeof createFixedWindowRateLimit>[0]> = {},
+) {
+  const limiter = createFixedWindowRateLimit({
+    name: "test-limiter",
+    max: 2,
+    windowMs: 60_000,
+    keyGenerator: (req) => req.ip ?? "unknown-ip",
+    ...overrides,
+  });
+
+  return { limiter, req: makeReq(), res: makeRes(), next: vi.fn() };
+}
+
 describe("rateLimit", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -52,16 +66,10 @@ describe("rateLimit", () => {
     it("allows requests up to max then blocks with 429", () => {
       vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
-      const limiter = createFixedWindowRateLimit({
+      const { limiter, req, res, next } = setupLimiter({
         name: "test-limiter",
         max: 2,
-        windowMs: 60_000,
-        keyGenerator: (req) => req.ip ?? "unknown-ip",
       });
-
-      const req = makeReq();
-      const res = makeRes();
-      const next = vi.fn();
 
       limiter(req as never, res as never, next);
       limiter(req as never, res as never, next);
@@ -89,16 +97,11 @@ describe("rateLimit", () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2025-01-01T00:00:00.000Z"));
 
-      const limiter = createFixedWindowRateLimit({
+      const { limiter, req, res, next } = setupLimiter({
         name: "test-reset",
         max: 1,
         windowMs: 1000,
-        keyGenerator: (req) => req.ip ?? "unknown-ip",
       });
-
-      const req = makeReq();
-      const res = makeRes();
-      const next = vi.fn();
 
       limiter(req as never, res as never, next);
       limiter(req as never, res as never, next);
@@ -114,17 +117,11 @@ describe("rateLimit", () => {
 
   describe("options", () => {
     it("supports skip option", () => {
-      const limiter = createFixedWindowRateLimit({
+      const { limiter, req, res, next } = setupLimiter({
         name: "test-skip",
         max: 1,
-        windowMs: 60_000,
-        keyGenerator: (req) => req.ip ?? "unknown-ip",
         skip: () => true,
       });
-
-      const req = makeReq();
-      const res = makeRes();
-      const next = vi.fn();
 
       limiter(req as never, res as never, next);
       limiter(req as never, res as never, next);
@@ -136,17 +133,11 @@ describe("rateLimit", () => {
 
     it("supports custom onLimit handler", () => {
       const onLimit = vi.fn();
-      const limiter = createFixedWindowRateLimit({
+      const { limiter, req, res, next } = setupLimiter({
         name: "test-onLimit",
         max: 1,
-        windowMs: 60_000,
-        keyGenerator: (req) => req.ip ?? "unknown-ip",
         onLimit,
       });
-
-      const req = makeReq();
-      const res = makeRes();
-      const next = vi.fn();
 
       limiter(req as never, res as never, next);
       limiter(req as never, res as never, next);
@@ -158,16 +149,10 @@ describe("rateLimit", () => {
 
   describe("headers and metrics", () => {
     it("adds rate-limit headers for allowed requests", () => {
-      const limiter = createFixedWindowRateLimit({
+      const { limiter, req, res, next } = setupLimiter({
         name: "test-headers",
         max: 2,
-        windowMs: 60_000,
-        keyGenerator: (req) => req.ip ?? "unknown-ip",
       });
-
-      const req = makeReq();
-      const res = makeRes();
-      const next = vi.fn();
 
       limiter(req as never, res as never, next);
       limiter(req as never, res as never, next);
@@ -180,16 +165,10 @@ describe("rateLimit", () => {
     it("increments metrics when requests are blocked", () => {
       const before = getRateLimitMetricsSnapshot();
 
-      const limiter = createFixedWindowRateLimit({
+      const { limiter, req, res, next } = setupLimiter({
         name: "metrics-limiter",
         max: 1,
-        windowMs: 60_000,
-        keyGenerator: (req) => req.ip ?? "unknown-ip",
       });
-
-      const req = makeReq();
-      const res = makeRes();
-      const next = vi.fn();
 
       limiter(req as never, res as never, next);
       limiter(req as never, res as never, next);
