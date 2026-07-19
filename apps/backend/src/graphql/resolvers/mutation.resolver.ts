@@ -17,6 +17,7 @@ import {
   registerInputSchema,
 } from "../../modules/auth/auth.schema";
 import { softDeleteLink } from "../../modules/shortUrls/shortUrls.repo";
+import type { UserRow } from "../../modules/users/users.types";
 import {
   createShortUrlInputSchema,
   deleteLinkArgsSchema,
@@ -36,6 +37,23 @@ function getCreateShortUrlErrorMessage(
   if (reason === "INVALID_URL") return "Invalid URL";
   if (reason === "INVALID_CODE") return "Invalid slug";
   return "Code already taken";
+}
+
+function issueSession(ctx: GraphQLContext, user: UserRow) {
+  const token = signToken({
+    sub: user.id,
+    email: user.email,
+    tokenVersion: user.token_version,
+  });
+  setAuthCookie(ctx.res, token);
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      createdAt: user.created_at,
+    },
+  };
 }
 
 export const mutationResolvers = {
@@ -94,20 +112,7 @@ export const mutationResolvers = {
     try {
       const passwordHash = await hashPassword(password);
       const user = await createUser(email, passwordHash);
-      const token = signToken({
-        sub: user.id,
-        email: user.email,
-        tokenVersion: user.token_version,
-      });
-      setAuthCookie(ctx.res, token);
-
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          createdAt: user.created_at,
-        },
-      };
+      return issueSession(ctx, user);
     } catch (error) {
       if (isPgUniqueViolation(error) && error.code === "23505") {
         throw new GraphQLError("Registration failed", {
@@ -142,20 +147,7 @@ export const mutationResolvers = {
       badUserInput("Invalid credentials");
     }
 
-    const token = signToken({
-      sub: user.id,
-      email: user.email,
-      tokenVersion: user.token_version,
-    });
-    setAuthCookie(ctx.res, token);
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        createdAt: user.created_at,
-      },
-    };
+    return issueSession(ctx, user);
   },
 
   logout: async (_: unknown, __: unknown, ctx: GraphQLContext) => {

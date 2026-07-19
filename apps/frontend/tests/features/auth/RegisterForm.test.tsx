@@ -5,7 +5,10 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RegisterForm } from "../../../src/features/auth/components/RegisterForm";
-import { AuthContext } from "../../../src/app/providers/authContext";
+import {
+  AuthContext,
+  AuthContextValue,
+} from "../../../src/app/providers/authContext";
 
 function createQueryClient() {
   return new QueryClient({
@@ -14,6 +17,23 @@ function createQueryClient() {
       mutations: { retry: false },
     },
   });
+}
+
+function renderRegisterForm(authOverrides: Partial<AuthContextValue> = {}) {
+  return render(
+    <MemoryRouter initialEntries={["/register"]}>
+      <QueryClientProvider client={createQueryClient()}>
+        <AuthContext.Provider
+          value={{ refreshSession: vi.fn(), logout: vi.fn(), ...authOverrides }}
+        >
+          <Routes>
+            <Route path="/register" element={<RegisterForm />} />
+            <Route path="/" element={<div>Home page</div>} />
+          </Routes>
+        </AuthContext.Provider>
+      </QueryClientProvider>
+    </MemoryRouter>,
+  );
 }
 
 describe("RegisterForm", () => {
@@ -41,18 +61,7 @@ describe("RegisterForm", () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={["/register"]}>
-        <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider value={{ refreshSession, logout: vi.fn() }}>
-            <Routes>
-              <Route path="/register" element={<RegisterForm />} />
-              <Route path="/" element={<div>Home page</div>} />
-            </Routes>
-          </AuthContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderRegisterForm({ refreshSession });
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },
@@ -96,19 +105,7 @@ describe("RegisterForm", () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={["/register"]}>
-        <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider
-            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
-          >
-            <Routes>
-              <Route path="/register" element={<RegisterForm />} />
-            </Routes>
-          </AuthContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderRegisterForm();
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },
@@ -127,19 +124,7 @@ describe("RegisterForm", () => {
   it("blocks submission when password confirmation does not match", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-    render(
-      <MemoryRouter initialEntries={["/register"]}>
-        <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider
-            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
-          >
-            <Routes>
-              <Route path="/register" element={<RegisterForm />} />
-            </Routes>
-          </AuthContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderRegisterForm();
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },
@@ -163,19 +148,7 @@ describe("RegisterForm", () => {
   it("blocks submission when password is too short", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-    render(
-      <MemoryRouter initialEntries={["/register"]}>
-        <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider
-            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
-          >
-            <Routes>
-              <Route path="/register" element={<RegisterForm />} />
-            </Routes>
-          </AuthContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderRegisterForm();
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },
@@ -196,19 +169,7 @@ describe("RegisterForm", () => {
   it("blocks submission when password lacks required complexity", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-    render(
-      <MemoryRouter initialEntries={["/register"]}>
-        <QueryClientProvider client={createQueryClient()}>
-          <AuthContext.Provider
-            value={{ refreshSession: vi.fn(), logout: vi.fn() }}
-          >
-            <Routes>
-              <Route path="/register" element={<RegisterForm />} />
-            </Routes>
-          </AuthContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderRegisterForm();
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "test@example.com" },

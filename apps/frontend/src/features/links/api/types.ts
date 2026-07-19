@@ -49,13 +49,6 @@ export type LinkStatsResponse = {
     totalClicks: string;
     lastClickedAt: string | null;
     series: { dayUtc: string; clicks: number }[];
-    link: {
-      id: string;
-      code: string;
-      originalUrl: string;
-      createdAt: string;
-      clickCount: string;
-      shortLink: string;
-    };
+    link: MyLink;
   };
 };
