@@ -16,7 +16,7 @@ vi.mock("../src/modules/users/users.repo", () => usersRepoMocks);
 const authServiceMocks = vi.hoisted(() => ({
   DUMMY_PASSWORD_HASH: "dummy-hash",
   hashPassword: vi.fn(),
-  signToken: vi.fn(),
+  issueSession: vi.fn(),
   verifyPassword: vi.fn(),
 }));
 vi.mock("../src/modules/auth/auth.service", () => authServiceMocks);
@@ -27,7 +27,6 @@ const shortUrlsRepoMocks = vi.hoisted(() => ({
 vi.mock("../src/modules/shortUrls/shortUrls.repo", () => shortUrlsRepoMocks);
 
 const authCookiesMocks = vi.hoisted(() => ({
-  setAuthCookie: vi.fn(),
   clearAuthCookie: vi.fn(),
 }));
 vi.mock("../src/security/authCookies", () => authCookiesMocks);
@@ -128,15 +127,18 @@ describe("mutationResolvers", () => {
       ).rejects.toMatchObject({ extensions: { code: "BAD_USER_INPUT" } });
     });
 
-    it("creates the user, signs a token and sets the auth cookie", async () => {
+    it("creates the user and delegates session issuance to issueSession", async () => {
       authServiceMocks.hashPassword.mockResolvedValue("hashed");
-      usersRepoMocks.createUser.mockResolvedValue({
+      const user = {
         id: "user-1",
         email: "a@b.com",
         token_version: 0,
         created_at: "2025-01-01T00:00:00.000Z",
+      };
+      usersRepoMocks.createUser.mockResolvedValue(user);
+      authServiceMocks.issueSession.mockReturnValue({
+        user: { id: "user-1", email: "a@b.com", createdAt: user.created_at },
       });
-      authServiceMocks.signToken.mockReturnValue("signed-token");
 
       const ctx = makeCtx();
       const result = await mutationResolvers.register(
@@ -145,15 +147,7 @@ describe("mutationResolvers", () => {
         ctx,
       );
 
-      expect(authServiceMocks.signToken).toHaveBeenCalledWith({
-        sub: "user-1",
-        email: "a@b.com",
-        tokenVersion: 0,
-      });
-      expect(authCookiesMocks.setAuthCookie).toHaveBeenCalledWith(
-        ctx.res,
-        "signed-token",
-      );
+      expect(authServiceMocks.issueSession).toHaveBeenCalledWith(ctx.res, user);
       expect(result).toMatchObject({ user: { id: "user-1", email: "a@b.com" } });
     });
 
@@ -232,16 +226,19 @@ describe("mutationResolvers", () => {
       });
     });
 
-    it("signs a token and sets the auth cookie on success", async () => {
-      usersRepoMocks.findUserByEmail.mockResolvedValue({
+    it("delegates session issuance to issueSession on success", async () => {
+      const user = {
         id: "user-1",
         email: "a@b.com",
         password_hash: "hashed",
         token_version: 2,
         created_at: "2025-01-01T00:00:00.000Z",
-      });
+      };
+      usersRepoMocks.findUserByEmail.mockResolvedValue(user);
       authServiceMocks.verifyPassword.mockResolvedValue(true);
-      authServiceMocks.signToken.mockReturnValue("signed-token");
+      authServiceMocks.issueSession.mockReturnValue({
+        user: { id: "user-1", email: "a@b.com", createdAt: user.created_at },
+      });
 
       const ctx = makeCtx();
       const result = await mutationResolvers.login(
@@ -250,15 +247,7 @@ describe("mutationResolvers", () => {
         ctx,
       );
 
-      expect(authServiceMocks.signToken).toHaveBeenCalledWith({
-        sub: "user-1",
-        email: "a@b.com",
-        tokenVersion: 2,
-      });
-      expect(authCookiesMocks.setAuthCookie).toHaveBeenCalledWith(
-        ctx.res,
-        "signed-token",
-      );
+      expect(authServiceMocks.issueSession).toHaveBeenCalledWith(ctx.res, user);
       expect(result).toMatchObject({ user: { id: "user-1", email: "a@b.com" } });
     });
   });
