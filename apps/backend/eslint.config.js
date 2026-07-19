@@ -26,6 +26,8 @@ export default [
         { argsIgnorePattern: "^_" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
+      "max-params": ["warn", 4],
+      complexity: ["warn", 15],
     },
   },
 ];
