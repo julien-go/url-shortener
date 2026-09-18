@@ -1,5 +1,5 @@
 import { pool } from "../../db/pool";
-import { LinkStats, LinkStatsRow } from "./shortUrls.types";
+import { LinkStats, LinkStatsRow, StatsGranularity } from "./shortUrls.types";
 
 const FIND_LINK_STATS_QUERY = `
   WITH su AS (
@@ -10,12 +10,48 @@ const FIND_LINK_STATS_QUERY = `
       AND deleted_at IS NULL
     LIMIT 1
   ),
-  days AS (
+  windows AS (
+    SELECT
+      range_start,
+      range_end,
+      range_start - (range_end - range_start + 1) AS previous_start,
+      range_start - 1 AS previous_end
+    FROM (
+      SELECT
+        date_trunc(
+          $4,
+          ((now() AT TIME ZONE 'utc')::date - ($3::int - 1))::timestamp
+        )::date AS range_start,
+        (now() AT TIME ZONE 'utc')::date AS range_end
+    ) AS bounds
+  ),
+  buckets AS (
     SELECT generate_series(
-      ((now() AT TIME ZONE 'utc')::date - ($3::int - 1)),
-      (now() AT TIME ZONE 'utc')::date,
-      interval '1 day'
-    )::date AS day_utc
+      w.range_start::timestamp,
+      w.range_end::timestamp,
+      ('1 ' || $4)::interval
+    )::date AS bucket_start
+    FROM windows w
+  ),
+  bucketed AS (
+    SELECT
+      date_trunc($4, dc.day_utc::timestamp)::date AS bucket_start,
+      SUM(dc.clicks)::int AS clicks
+    FROM daily_clicks dc, windows w
+    WHERE dc.short_url_id = (SELECT id FROM su)
+      AND dc.day_utc BETWEEN w.range_start AND w.range_end
+    GROUP BY 1
+  ),
+  totals AS (
+    SELECT
+      COALESCE(SUM(dc.clicks) FILTER (
+        WHERE dc.day_utc BETWEEN w.range_start AND w.range_end
+      ), 0)::int AS range_clicks,
+      COALESCE(SUM(dc.clicks) FILTER (
+        WHERE dc.day_utc BETWEEN w.previous_start AND w.previous_end
+      ), 0)::int AS previous_range_clicks
+    FROM windows w
+    LEFT JOIN daily_clicks dc ON dc.short_url_id = (SELECT id FROM su)
   )
   SELECT
     (SELECT id FROM su) AS link_id,
@@ -24,27 +60,31 @@ const FIND_LINK_STATS_QUERY = `
     (SELECT created_at FROM su)::text AS created_at,
     (SELECT total_clicks FROM su) AS total_clicks,
     (SELECT last_clicked_at FROM su)::text AS last_clicked_at,
-    d.day_utc::text AS day_utc,
-    COALESCE(dc.clicks, 0)::int AS clicks
-  FROM days d
-  LEFT JOIN daily_clicks dc
-    ON dc.short_url_id = (SELECT id FROM su)
-   AND dc.day_utc = d.day_utc
+    b.bucket_start::text AS bucket_start,
+    COALESCE(bk.clicks, 0) AS clicks,
+    t.range_clicks,
+    t.previous_range_clicks
+  FROM buckets b
+  LEFT JOIN bucketed bk ON bk.bucket_start = b.bucket_start
+  CROSS JOIN totals t
   WHERE (SELECT id FROM su) IS NOT NULL
-  ORDER BY d.day_utc ASC;
+  ORDER BY b.bucket_start ASC;
 `;
 
 export async function findLinkStats(params: {
   userId: string;
   linkId: string;
   days: number;
+  granularity: StatsGranularity;
+  pgGrain: "day" | "week" | "month";
 }): Promise<LinkStats | null> {
-  const { userId, linkId, days } = params;
+  const { userId, linkId, days, granularity, pgGrain } = params;
 
   const { rows } = await pool.query<LinkStatsRow>(FIND_LINK_STATS_QUERY, [
     linkId,
     userId,
     days,
+    pgGrain,
   ]);
 
   if (rows.length === 0) return null;
@@ -53,8 +93,8 @@ export async function findLinkStats(params: {
 
   return {
     linkId: firstRow.link_id,
-    totalClicks: firstRow.total_clicks, // bigint => string
-    lastClickedAt: firstRow.last_clicked_at, // string | null
+    totalClicks: firstRow.total_clicks,
+    lastClickedAt: firstRow.last_clicked_at,
     link: {
       id: firstRow.link_id,
       code: firstRow.code,
@@ -62,6 +102,12 @@ export async function findLinkStats(params: {
       createdAt: firstRow.created_at,
       clickCount: String(firstRow.total_clicks ?? 0),
     },
-    series: rows.map((row) => ({ dayUtc: row.day_utc, clicks: row.clicks })),
+    granularity,
+    rangeClicks: firstRow.range_clicks,
+    previousRangeClicks: firstRow.previous_range_clicks,
+    series: rows.map((row) => ({
+      bucketStart: row.bucket_start,
+      clicks: row.clicks,
+    })),
   };
 }

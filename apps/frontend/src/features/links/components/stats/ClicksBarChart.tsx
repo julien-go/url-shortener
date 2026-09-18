@@ -8,31 +8,29 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import type { ClickPoint, StatsGranularity } from "../../api/types";
+import { formatBucketLabel } from "./trend";
 
-export type ClickSeriesItem = {
-  dayUtc: string; // "YYYY-MM-DD"
-  clicks: number;
-};
-
-function formatDayLabel(dayUtc: string) {
-  const [year, month, day] = dayUtc.split("-");
-  if (!year || !month || !day) return dayUtc;
-  return `${day}/${month}`;
-}
+export type ClickSeriesItem = ClickPoint;
 
 type ClicksBarChartProps = {
   series: ClickSeriesItem[];
+  granularity: StatsGranularity;
   height?: number;
 };
 
-export function ClicksBarChart({ series, height = 260 }: ClicksBarChartProps) {
+export function ClicksBarChart({
+  series,
+  granularity,
+  height = 260,
+}: ClicksBarChartProps) {
   const chartData = React.useMemo(() => {
     return series.map((seriesItem) => ({
-      dayUtc: seriesItem.dayUtc,
-      dayLabel: formatDayLabel(seriesItem.dayUtc),
+      bucketStart: seriesItem.bucketStart,
+      bucketLabel: formatBucketLabel(seriesItem.bucketStart, granularity),
       clicks: seriesItem.clicks,
     }));
-  }, [series]);
+  }, [series, granularity]);
 
   return (
     <div style={{ width: "100%", height }} className="min-w-0">
@@ -43,7 +41,7 @@ export function ClicksBarChart({ series, height = 260 }: ClicksBarChartProps) {
         >
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
           <XAxis
-            dataKey="dayLabel"
+            dataKey="bucketLabel"
             stroke="var(--muted-foreground)"
             tickMargin={8}
             interval="preserveStartEnd"
@@ -58,25 +56,11 @@ export function ClicksBarChart({ series, height = 260 }: ClicksBarChartProps) {
             contentStyle={{
               backgroundColor: "var(--popover)",
               borderColor: "var(--border)",
-              borderRadius: "var(--radius)",
-              color: "var(--popover-foreground)",
+              borderRadius: 12,
             }}
-            labelStyle={{ color: "var(--muted-foreground)" }}
-            formatter={(value) => {
-              const numericValue =
-                typeof value === "number" ? value : Number(value);
-              return [numericValue, "Clicks"];
-            }}
-            labelFormatter={(label, payload) => {
-              const payloadItem = payload?.[0]?.payload as
-                | { dayUtc?: string }
-                | undefined;
-
-              const dayUtc = payloadItem?.dayUtc;
-              return dayUtc ? `Day (UTC): ${dayUtc}` : String(label);
-            }}
+            labelStyle={{ color: "var(--foreground)" }}
           />
-          <Bar dataKey="clicks" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="clicks" fill="var(--primary)" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

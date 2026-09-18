@@ -7,6 +7,8 @@ import {
 } from "../../modules/shortUrls/shortUrls.repo";
 import { decodeCursor, encodeCursor } from "../cursor";
 import { findLinkStats } from "../../modules/shortUrls/shortUrls.stats.repo";
+import { STATS_RANGES } from "../../modules/shortUrls/shortUrls.constants";
+import type { StatsRange } from "../../modules/shortUrls/shortUrls.types";
 import { linkStatsArgsSchema, myLinksArgsSchema } from "./resolvers.schema";
 import { badUserInput, requireAuth } from "./shared";
 
@@ -77,7 +79,7 @@ export const queryResolvers = {
 
   linkStats: async (
     _: unknown,
-    args: { linkId: string; range: "DAYS_7" | "DAYS_30" },
+    args: { linkId: string; range: StatsRange },
     ctx: GraphQLContext,
   ) => {
     const currentUser = requireAuth(ctx);
@@ -87,12 +89,14 @@ export const queryResolvers = {
       badUserInput("Invalid input", parsed.error.flatten());
     }
 
-    const days = parsed.data.range === "DAYS_7" ? 7 : 30;
+    const { days, granularity, pgGrain } = STATS_RANGES[parsed.data.range];
 
     const stats = await findLinkStats({
       userId: currentUser.id,
       linkId: parsed.data.linkId,
       days,
+      granularity,
+      pgGrain,
     });
 
     if (!stats) {

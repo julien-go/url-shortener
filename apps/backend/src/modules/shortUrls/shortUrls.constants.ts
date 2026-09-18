@@ -48,3 +48,10 @@ export const RESERVED_CODES = new Set([
   "billing",
   "pricing",
 ]);
+
+export const STATS_RANGES = {
+  DAYS_7: { days: 7, granularity: "DAY", pgGrain: "day" },
+  DAYS_30: { days: 30, granularity: "DAY", pgGrain: "day" },
+  DAYS_90: { days: 90, granularity: "WEEK", pgGrain: "week" },
+  MONTHS_12: { days: 365, granularity: "MONTH", pgGrain: "month" },
+} as const;

@@ -201,24 +201,34 @@ describe("queryResolvers", () => {
       ).rejects.toMatchObject({ extensions: { code: "NOT_FOUND" } });
     });
 
-    it("resolves DAYS_7/DAYS_30 to 7/30 days and returns the stats", async () => {
-      statsRepoMocks.findLinkStats.mockResolvedValue({ totalClicks: 3 });
+    it.each([
+      ["DAYS_7", 7, "DAY", "day"],
+      ["DAYS_30", 30, "DAY", "day"],
+      ["DAYS_90", 90, "WEEK", "week"],
+      ["MONTHS_12", 365, "MONTH", "month"],
+    ])(
+      "maps %s to a %d day window at %s granularity",
+      async (range, days, granularity, pgGrain) => {
+        statsRepoMocks.findLinkStats.mockResolvedValue({ totalClicks: 3 });
 
-      const result = await queryResolvers.linkStats(
-        null,
-        {
+        const result = await queryResolvers.linkStats(
+          null,
+          {
+            linkId: "123e4567-e89b-12d3-a456-426614174000",
+            range: range as "DAYS_7",
+          },
+          makeCtx({ id: "user-1", email: "a@b.com" }),
+        );
+
+        expect(statsRepoMocks.findLinkStats).toHaveBeenCalledWith({
+          userId: "user-1",
           linkId: "123e4567-e89b-12d3-a456-426614174000",
-          range: "DAYS_30",
-        },
-        makeCtx({ id: "user-1", email: "a@b.com" }),
-      );
-
-      expect(statsRepoMocks.findLinkStats).toHaveBeenCalledWith({
-        userId: "user-1",
-        linkId: "123e4567-e89b-12d3-a456-426614174000",
-        days: 30,
-      });
-      expect(result).toEqual({ totalClicks: 3 });
-    });
+          days,
+          granularity,
+          pgGrain,
+        });
+        expect(result).toEqual({ totalClicks: 3 });
+      },
+    );
   });
 });

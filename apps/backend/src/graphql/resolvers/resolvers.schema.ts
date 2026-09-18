@@ -28,7 +28,7 @@ export const myLinksArgsSchema = z
 export const linkStatsArgsSchema = z
   .object({
     linkId: z.string().uuid(),
-    range: z.enum(["DAYS_7", "DAYS_30"]),
+    range: z.enum(["DAYS_7", "DAYS_30", "DAYS_90", "MONTHS_12"]),
   })
   .strict();
 
