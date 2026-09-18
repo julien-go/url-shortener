@@ -32,23 +32,20 @@ export type MyLinksResponse = {
   };
 };
 
-export type StatsRange = "DAYS_7" | "DAYS_30";
+export type StatsRange = "DAYS_7" | "DAYS_30" | "DAYS_90" | "MONTHS_12";
+export type StatsGranularity = "DAY" | "WEEK" | "MONTH";
 
-export type LinkStatsData = {
-  linkStats: {
-    linkId: string;
-    totalClicks: string;
-    lastClickedAt: string | null;
-    series: { dayUtc: string; clicks: number }[];
-  };
-};
+export type ClickPoint = { bucketStart: string; clicks: number };
 
 export type LinkStatsResponse = {
   linkStats: {
     linkId: string;
     totalClicks: string;
     lastClickedAt: string | null;
-    series: { dayUtc: string; clicks: number }[];
+    granularity: StatsGranularity;
+    rangeClicks: number;
+    previousRangeClicks: number;
+    series: ClickPoint[];
     link: MyLink;
   };
 };

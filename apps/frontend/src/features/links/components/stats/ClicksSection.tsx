@@ -1,31 +1,41 @@
 import { Button } from "../../../../components/ui/button";
 import { ErrorBanner } from "../../../../components/ui/error-banner";
 import { ClicksBarChart } from "./ClicksBarChart";
-import type { LinkSeriesItem } from "./types";
+import type { ClickPoint, StatsGranularity } from "../../api/types";
+import { bucketNoun, formatBucketLabel } from "./trend";
 
-function formatSeriesDayLabel(dayUtc: string) {
-  const [year, month, day] = dayUtc.split("-");
-  if (!year || !month || !day) return dayUtc;
-  return `${day}/${month}`;
-}
+const BUCKET_COLUMN_HEADER: Record<StatsGranularity, string> = {
+  DAY: "Day (UTC)",
+  WEEK: "Week starting (UTC)",
+  MONTH: "Month (UTC)",
+};
 
 export function ClicksSection({
   queryError,
   isFetching,
-  totalClicks,
+  rangeClicks,
   series,
+  granularity,
   onRefresh,
 }: {
   queryError: unknown;
   isFetching: boolean;
-  totalClicks: string | undefined;
-  series: LinkSeriesItem[];
+  rangeClicks: number | undefined;
+  series: ClickPoint[];
+  granularity: StatsGranularity;
   onRefresh: () => void;
 }) {
+  const title =
+    granularity === "DAY"
+      ? "Clicks per day"
+      : granularity === "WEEK"
+        ? "Clicks per week"
+        : "Clicks per month";
+
   return (
     <section className="space-y-4 rounded-xl border border-border bg-card p-6 sm:p-7">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-base font-bold">Clicks per day</h2>
+        <h2 className="text-base font-bold">{title}</h2>
         <Button
           variant="surface"
           size="sm"
@@ -49,27 +59,34 @@ export function ClicksSection({
         </div>
       ) : (
         <>
-          <ClicksBarChart series={series} height={220} />
+          <ClicksBarChart
+            series={series}
+            granularity={granularity}
+            height={220}
+          />
 
           <div className="sr-only" aria-live="polite">
             <p>
-              Daily clicks over the selected period ({series.length} days, total{" "}
-              {totalClicks ?? 0} clicks).
+              Clicks over the selected period ({series.length}{" "}
+              {bucketNoun(granularity, series.length)}, total {rangeClicks ?? 0}{" "}
+              clicks).
             </p>
             <table className="w-full caption-bottom text-sm">
-              <caption>Accessible data table for clicks per day.</caption>
+              <caption>Accessible data table for clicks per bucket.</caption>
               <thead>
                 <tr>
-                  <th scope="col">Day (UTC)</th>
+                  <th scope="col">{BUCKET_COLUMN_HEADER[granularity]}</th>
                   <th scope="col">Clicks</th>
                 </tr>
               </thead>
               <tbody>
                 {series.map((seriesItem) => (
-                  <tr key={seriesItem.dayUtc}>
+                  <tr key={seriesItem.bucketStart}>
                     <td>
-                      <span>{formatSeriesDayLabel(seriesItem.dayUtc)}</span>
-                      <span> ({seriesItem.dayUtc})</span>
+                      <span>
+                        {formatBucketLabel(seriesItem.bucketStart, granularity)}
+                      </span>
+                      <span> ({seriesItem.bucketStart})</span>
                     </td>
                     <td>{seriesItem.clicks}</td>
                   </tr>

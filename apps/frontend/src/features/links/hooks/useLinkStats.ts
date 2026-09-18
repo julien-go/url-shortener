@@ -1,8 +1,8 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { graphqlFetch } from "../../../lib/graphql/graphqlFetch";
-import type { LinkStatsResponse } from "../api/types";
+import type { LinkStatsResponse, StatsRange } from "../api/types";
 
-export type StatsRange = "DAYS_7" | "DAYS_30";
+export type { StatsRange };
 
 const LINK_STATS_QUERY = `#graphql
   query LinkStats($linkId: ID!, $range: StatsRange!) {
@@ -10,8 +10,11 @@ const LINK_STATS_QUERY = `#graphql
       linkId
       totalClicks
       lastClickedAt
+      granularity
+      rangeClicks
+      previousRangeClicks
       series {
-        dayUtc
+        bucketStart
         clicks
       }
       link {

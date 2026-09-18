@@ -4,7 +4,8 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "../../../../components/ui/toggle-group";
-import type { StatsRange } from "../../hooks/useLinkStats";
+import type { StatsRange } from "../../api/types";
+import { RANGE_OPTIONS } from "./trend";
 
 export function LinkStatsHeader({
   range,
@@ -30,7 +31,7 @@ export function LinkStatsHeader({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+        <div className="flex flex-col items-start gap-1.5 self-start md:items-end md:self-auto">
           <ToggleGroup
             type="single"
             value={range}
@@ -40,19 +41,19 @@ export function LinkStatsHeader({
               onRangeChange(rangeValue as StatsRange);
             }}
           >
-            <ToggleGroupItem
-              value="DAYS_7"
-              className="data-[state=on]:bg-primary/12 data-[state=on]:text-primary"
-            >
-              7 days
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="DAYS_30"
-              className="data-[state=on]:bg-primary/12 data-[state=on]:text-primary"
-            >
-              30 days
-            </ToggleGroupItem>
+            {RANGE_OPTIONS.map((option) => (
+              <ToggleGroupItem
+                key={option.value}
+                value={option.value}
+                className="data-[state=on]:bg-primary/12 data-[state=on]:text-primary"
+              >
+                {option.label}
+              </ToggleGroupItem>
+            ))}
           </ToggleGroup>
+          <p className="text-xs text-muted-foreground">
+            Days are counted in UTC.
+          </p>
         </div>
       </div>
       <Separator className="bg-border/80" />

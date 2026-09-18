@@ -49,7 +49,8 @@ export type MyLinkRow = {
   total_clicks: string;
 };
 
-export type StatsRange = "DAYS_7" | "DAYS_30";
+export type StatsRange = "DAYS_7" | "DAYS_30" | "DAYS_90" | "MONTHS_12";
+export type StatsGranularity = "DAY" | "WEEK" | "MONTH";
 
 export type LinkStatsRow = {
   link_id: string;
@@ -58,8 +59,10 @@ export type LinkStatsRow = {
   created_at: string;
   total_clicks: string;
   last_clicked_at: string | null;
-  day_utc: string;
+  bucket_start: string;
   clicks: number;
+  range_clicks: number;
+  previous_range_clicks: number;
 };
 
 export type LinkStats = {
@@ -73,5 +76,8 @@ export type LinkStats = {
     createdAt: string;
     clickCount: string;
   };
-  series: { dayUtc: string; clicks: number }[];
+  granularity: StatsGranularity;
+  rangeClicks: number;
+  previousRangeClicks: number;
+  series: { bucketStart: string; clicks: number }[];
 };

@@ -92,12 +92,21 @@ export const typeDefs = `#graphql
   enum StatsRange {
     DAYS_7
     DAYS_30
+    DAYS_90
+    MONTHS_12
   }
 
-  "Click count for a single UTC day."
+  "Size of each bucket in the series, derived from the requested range."
+  enum StatsGranularity {
+    DAY
+    WEEK
+    MONTH
+  }
+
+  "Click count for a single bucket of the series."
   type ClickPoint {
-    "UTC calendar day, formatted as YYYY-MM-DD."
-    dayUtc: String!
+    "First UTC day of the bucket, formatted as YYYY-MM-DD."
+    bucketStart: String!
     clicks: Int!
   }
 
@@ -106,7 +115,13 @@ export const typeDefs = `#graphql
     "Total number of clicks across the link's entire lifetime (as a string to avoid Int precision limits)."
     totalClicks: String!
     lastClickedAt: String
-    "One data point per day in the requested range, in chronological order."
+    "Bucket size of the series. Every day is UTC."
+    granularity: StatsGranularity!
+    "Clicks over the requested range."
+    rangeClicks: Int!
+    "Clicks over the window of equal length immediately before the range."
+    previousRangeClicks: Int!
+    "One data point per bucket in the requested range, in chronological order."
     series: [ClickPoint!]!
     link: ShortUrl!
   }
