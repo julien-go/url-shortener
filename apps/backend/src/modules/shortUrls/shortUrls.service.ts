@@ -7,13 +7,14 @@ import {
 } from "./shortUrls.constants";
 import { CreateShortUrlInput, CreateShortUrlResult } from "./shortUrls.types";
 import { createShortUrlRow } from "./shortUrls.repo";
-import { env } from "../../config/env";
 import { logger } from "../../utils/logger";
 import {
-  isValidHttpUrl,
+  buildShortLink,
+  isHttpUrlProtocol,
   isValidSlug,
   isUniqueViolation,
   generateRandomSlug,
+  normalizeSlug,
 } from "./shortUrls.utils";
 
 export async function resolveShortUrl(
@@ -39,7 +40,6 @@ async function tryCreateShortUrl(
   code: string,
   targetUrl: string,
   userId: string,
-  publicBaseUrl: string,
 ): Promise<CreateShortUrlResult | null> {
   try {
     const row = await createShortUrlRow({ code, targetUrl, userId });
@@ -47,7 +47,7 @@ async function tryCreateShortUrl(
     return {
       ok: true,
       shortUrl: row,
-      shortLink: `${publicBaseUrl}/${row.code}`,
+      shortLink: buildShortLink(row.code),
     };
   } catch (err) {
     if (!isUniqueViolation(err)) throw err;
@@ -59,32 +59,20 @@ async function createWithCustomCode(
   customCode: string,
   originalUrl: string,
   userId: string,
-  publicBaseUrl: string,
 ): Promise<CreateShortUrlResult> {
-  const result = await tryCreateShortUrl(
-    customCode,
-    originalUrl,
-    userId,
-    publicBaseUrl,
-  );
+  const result = await tryCreateShortUrl(customCode, originalUrl, userId);
   return result ?? { ok: false, reason: "SLUG_TAKEN" };
 }
 
 async function createWithGeneratedCode(
   originalUrl: string,
   userId: string,
-  publicBaseUrl: string,
 ): Promise<CreateShortUrlResult> {
   for (let attempt = 0; attempt < MAX_SLUG_RETRIES; attempt++) {
     const code = generateRandomSlug(AUTO_SLUG_LENGTH);
-    if (RESERVED_CODES.has(code.toLowerCase())) continue;
+    if (RESERVED_CODES.has(code)) continue;
 
-    const result = await tryCreateShortUrl(
-      code,
-      originalUrl,
-      userId,
-      publicBaseUrl,
-    );
+    const result = await tryCreateShortUrl(code, originalUrl, userId);
     if (result) return result;
   }
 
@@ -96,9 +84,9 @@ export async function createShortUrl(
   userId: string,
 ): Promise<CreateShortUrlResult> {
   const originalUrl = input.originalUrl?.trim();
-  const customCode = input.code?.trim();
+  const customCode = input.code ? normalizeSlug(input.code) : undefined;
 
-  if (!originalUrl || !isValidHttpUrl(originalUrl)) {
+  if (!originalUrl || !isHttpUrlProtocol(originalUrl)) {
     return { ok: false, reason: "INVALID_URL" };
   }
 
@@ -106,10 +94,7 @@ export async function createShortUrl(
     return { ok: false, reason: "INVALID_CODE" };
   }
 
-  const publicBaseUrl = env.PUBLIC_BASE_URL;
-  if (!publicBaseUrl) throw new Error("PUBLIC_BASE_URL is not set");
-
   return customCode
-    ? createWithCustomCode(customCode, originalUrl, userId, publicBaseUrl)
-    : createWithGeneratedCode(originalUrl, userId, publicBaseUrl);
+    ? createWithCustomCode(customCode, originalUrl, userId)
+    : createWithGeneratedCode(originalUrl, userId);
 }

@@ -49,6 +49,15 @@ const STATUS_PAGE_STYLES = `
       }
     `;
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function renderStatusPage({
   title,
   heading,
@@ -66,22 +75,26 @@ export function renderStatusPage({
 }) {
   const action =
     actionHref && actionLabel
-      ? `<a href="${actionHref}">${actionLabel}</a>`
+      ? `<a href="${escapeHtml(actionHref)}">${escapeHtml(actionLabel)}</a>`
       : "";
+
+  const brand = brandName
+    ? `<div class="brand">${escapeHtml(brandName)}</div>`
+    : "";
 
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${title}</title>
+    <title>${escapeHtml(title)}</title>
     <style>${STATUS_PAGE_STYLES}</style>
   </head>
   <body>
     <main class="card">
-       <div class="brand">${brandName}</div>
-      <h1>${heading}</h1>
-      <p>${message}</p>
+      ${brand}
+      <h1>${escapeHtml(heading)}</h1>
+      <p>${escapeHtml(message)}</p>
       ${action}
     </main>
   </body>
