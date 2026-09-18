@@ -1,28 +1,13 @@
 import { z } from "zod";
-import { isHttpUrlProtocol } from "../../modules/shortUrls/shortUrls.utils";
+import { MAX_TARGET_URL_LENGTH } from "../../modules/shortUrls/shortUrls.constants";
 
 export const createShortUrlInputSchema = z
   .object({
-    originalUrl: z
-      .string()
-      .trim()
-      .url()
-      .max(2048)
-      .refine(isHttpUrlProtocol, "Only http/https URLs are allowed"),
+    originalUrl: z.string().trim().min(1).max(MAX_TARGET_URL_LENGTH),
     code: z.preprocess(
       (value) =>
         typeof value === "string" && value.trim() === "" ? undefined : value,
-      z
-        .string()
-        .trim()
-        .toLowerCase()
-        .min(3)
-        .max(32)
-        .regex(
-          /^[a-z0-9-]+$/,
-          "Slug must contain only lowercase letters, numbers and '-'",
-        )
-        .optional(),
+      z.string().trim().optional(),
     ),
   })
   .strict();
