@@ -89,7 +89,7 @@ app.get("/healthz", (_req, res) => {
 if (env.METRICS_ENABLED) {
   app.get("/metrics", (req, res) => {
     const hasValidApiKey =
-      !env.METRICS_API_KEY ||
+      Boolean(env.METRICS_API_KEY) &&
       req.header("x-metrics-api-key") === env.METRICS_API_KEY;
 
     if (!hasValidApiKey) {

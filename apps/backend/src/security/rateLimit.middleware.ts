@@ -1,31 +1,12 @@
-import { createHash } from "node:crypto";
 import type { Request } from "express";
-import jwt from "jsonwebtoken";
 import { env } from "../config/env";
+import { verifyToken } from "../modules/auth/auth.service";
 import { createFixedWindowRateLimit } from "./rateLimit";
 import { extractCookieValue } from "./authCookies";
 import { renderStatusPage } from "../http/statusPage";
-import { logger } from "../utils/logger";
 
 function getClientIp(req: Request): string {
   return req.ip || req.socket.remoteAddress || "unknown";
-}
-
-function hashForLogs(value: string): string {
-  return createHash("sha256").update(value).digest("hex").slice(0, 12);
-}
-
-function tryVerifyToken(token: string): { sub?: string } | null {
-  const secret = env.JWT_SECRET;
-  if (!secret) return null;
-
-  try {
-    const payload = jwt.verify(token, secret);
-    if (!payload || typeof payload !== "object") return null;
-    return payload as { sub?: string };
-  } catch {
-    return null;
-  }
 }
 
 function createShortUrlIdentity(req: Request): string {
@@ -35,7 +16,7 @@ function createShortUrlIdentity(req: Request): string {
       : null;
 
   if (cookieToken) {
-    const payload = tryVerifyToken(cookieToken);
+    const payload = verifyToken(cookieToken);
     if (payload?.sub) {
       return `user:${payload.sub}`;
     }
@@ -101,35 +82,6 @@ function createAuthIdentity(req: Request): string {
   return `auth:${ip}:${email}`;
 }
 
-type AuthBlockState = {
-  strikes: number;
-  blockedUntilMs: number;
-};
-
-const authBlockByIdentity = new Map<string, AuthBlockState>();
-const AUTH_BLOCK_MAX_ENTRIES = 10_000;
-
-function ensureAuthBlockCapacity(now: number): void {
-  if (authBlockByIdentity.size < AUTH_BLOCK_MAX_ENTRIES) return;
-
-  for (const [identity, state] of authBlockByIdentity.entries()) {
-    if (state.blockedUntilMs <= now) {
-      authBlockByIdentity.delete(identity);
-    }
-  }
-
-  while (authBlockByIdentity.size >= AUTH_BLOCK_MAX_ENTRIES) {
-    const oldest = authBlockByIdentity.keys().next().value;
-    if (oldest === undefined) break;
-    authBlockByIdentity.delete(oldest);
-  }
-}
-
-function getAuthBackoffSeconds(strikes: number): number {
-  const boundedStrike = Math.max(1, Math.min(strikes, 6));
-  return env.RL_AUTH_BLOCK_BASE_SECONDS * 2 ** (boundedStrike - 1);
-}
-
 export const redirectRateLimit = createFixedWindowRateLimit({
   name: "redirect",
   windowMs: env.RL_REDIRECT_WINDOW_MS,
@@ -162,6 +114,7 @@ export const redirectRateLimit = createFixedWindowRateLimit({
               `Please try again in ${retryAfterSeconds} second(s).`,
             actionHref: req.originalUrl,
             actionLabel: "Try again",
+            brandName: env.APP_NAME,
           }),
         );
       return;
@@ -196,54 +149,11 @@ export const authRateLimit = createFixedWindowRateLimit({
   max: env.RL_AUTH_MAX,
   keyGenerator: (req) => createAuthIdentity(req),
   skip: (req) => !isAuthMutationOperation(req),
-  onLimit: (req, res, retryAfterSeconds) => {
-    const identity = createAuthIdentity(req);
-    const now = Date.now();
-
-    ensureAuthBlockCapacity(now);
-
-    const state = authBlockByIdentity.get(identity);
-
-    if (state && state.blockedUntilMs > now) {
-      const remainingSeconds = Math.max(
-        retryAfterSeconds,
-        Math.ceil((state.blockedUntilMs - now) / 1000),
-      );
-
-      res.setHeader("Retry-After", String(remainingSeconds));
-      res.status(429).json({
-        error: "Too many authentication attempts",
-        retryAfterSeconds: remainingSeconds,
-      });
-      return;
-    }
-
-    const nextStrikes = (state?.strikes ?? 0) + 1;
-    const backoffSeconds = getAuthBackoffSeconds(nextStrikes);
-
-    authBlockByIdentity.set(identity, {
-      strikes: nextStrikes,
-      blockedUntilMs: now + backoffSeconds * 1000,
-    });
-
-    logger.warn(
-      {
-        limiter: "auth",
-        route: req.originalUrl,
-        method: req.method,
-        ipHash: hashForLogs(getClientIp(req)),
-        emailHash: hashForLogs(extractAuthEmail(req) ?? "unknown-email"),
-        strikes: nextStrikes,
-        backoffSeconds,
-      },
-      "rate-limit auth blocked",
-    );
-
-    const finalRetryAfter = Math.max(retryAfterSeconds, backoffSeconds);
-    res.setHeader("Retry-After", String(finalRetryAfter));
+  onLimit: (_req, res, retryAfterSeconds) => {
+    res.setHeader("Retry-After", String(retryAfterSeconds));
     res.status(429).json({
       error: "Too many authentication attempts",
-      retryAfterSeconds: finalRetryAfter,
+      retryAfterSeconds,
     });
   },
 });
