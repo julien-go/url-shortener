@@ -1,43 +1,27 @@
 import { describe, expect, it } from "vitest";
 import {
   generateRandomSlug,
+  isHttpUrlProtocol,
   isUniqueViolation,
-  isValidHttpUrl,
   isValidSlug,
 } from "../src/modules/shortUrls/shortUrls.utils";
 
 describe("shortUrls.utils", () => {
-  describe("isValidHttpUrl", () => {
-    it("accepts public http/https URLs", () => {
-      expect(isValidHttpUrl("https://example.com")).toBe(true);
-      expect(isValidHttpUrl("http://example.com/path?q=1")).toBe(true);
+  describe("isHttpUrlProtocol", () => {
+    it("accepts http and https URLs", () => {
+      expect(isHttpUrlProtocol("https://example.com")).toBe(true);
+      expect(isHttpUrlProtocol("http://example.com/path?q=1")).toBe(true);
     });
 
-    it("rejects non-http protocols and malformed input", () => {
-      expect(isValidHttpUrl("ftp://example.com")).toBe(false);
-      expect(isValidHttpUrl("123")).toBe(false);
+    it("rejects other protocols and malformed input", () => {
+      expect(isHttpUrlProtocol("ftp://example.com")).toBe(false);
+      expect(isHttpUrlProtocol("javascript:alert(1)")).toBe(false);
+      expect(isHttpUrlProtocol("123")).toBe(false);
     });
 
-    it("rejects loopback, private and link-local hosts", () => {
-      expect(isValidHttpUrl("http://localhost:3000")).toBe(false);
-      expect(isValidHttpUrl("http://127.0.0.1")).toBe(false);
-      expect(isValidHttpUrl("http://10.0.0.8")).toBe(false);
-      expect(isValidHttpUrl("http://172.16.0.8")).toBe(false);
-      expect(isValidHttpUrl("http://192.168.1.10")).toBe(false);
-      expect(isValidHttpUrl("http://169.254.169.254/latest/meta-data")).toBe(
-        false,
-      );
-      expect(
-        isValidHttpUrl("http://metadata.google.internal/computeMetadata/v1"),
-      ).toBe(false);
-    });
-
-    it("rejects sensitive IPv6 hosts", () => {
-      expect(isValidHttpUrl("http://[::1]")).toBe(false);
-      expect(isValidHttpUrl("http://[fc00::1234]")).toBe(false);
-      expect(isValidHttpUrl("http://[fd12:3456:789a::1]")).toBe(false);
-      expect(isValidHttpUrl("http://[fe80::1]")).toBe(false);
-      expect(isValidHttpUrl("http://[::ffff:192.168.1.10]")).toBe(false);
+    it("accepts private hosts, since the server never fetches the target", () => {
+      expect(isHttpUrlProtocol("http://localhost:3000")).toBe(true);
+      expect(isHttpUrlProtocol("http://169.254.169.254")).toBe(true);
     });
   });
 

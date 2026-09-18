@@ -10,7 +10,7 @@ import { createShortUrlRow } from "./shortUrls.repo";
 import { env } from "../../config/env";
 import { logger } from "../../utils/logger";
 import {
-  isValidHttpUrl,
+  isHttpUrlProtocol,
   isValidSlug,
   isUniqueViolation,
   generateRandomSlug,
@@ -98,7 +98,7 @@ export async function createShortUrl(
   const originalUrl = input.originalUrl?.trim();
   const customCode = input.code?.trim();
 
-  if (!originalUrl || !isValidHttpUrl(originalUrl)) {
+  if (!originalUrl || !isHttpUrlProtocol(originalUrl)) {
     return { ok: false, reason: "INVALID_URL" };
   }
 
