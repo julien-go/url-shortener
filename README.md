@@ -93,6 +93,23 @@ pnpm -r test
 pnpm -r build
 ```
 
+### Tests d'intégration (base réelle)
+
+`pnpm -r test` ne lance que les tests unitaires : le dépôt reste vert sans PostgreSQL installé.
+
+Les tests qui exécutent le SQL réel (requête de statistiques, pagination par curseur,
+comptage de clics) tournent à part, sur une base dédiée :
+
+```bash
+createdb url_shortener_test
+pnpm --filter ./apps/backend exec dbmate --url "$DATABASE_URL_TEST" up
+pnpm --filter ./apps/backend test:integration
+```
+
+Renseigne `DATABASE_URL_TEST` dans `apps/backend/.env` (voir `.env.example`).
+Ces tests vident les tables entre chaque cas : le nom de la base **doit** se terminer par
+`_test`, sinon le lancement est refusé. La CI les exécute sur son service PostgreSQL.
+
 ## Features
 
 - Inscription / connexion / déconnexion
