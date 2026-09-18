@@ -49,14 +49,32 @@ describe("mutationResolvers", () => {
       ).rejects.toMatchObject({ extensions: { code: "UNAUTHENTICATED" } });
     });
 
-    it("throws BAD_USER_INPUT for an invalid input", async () => {
+    it("throws BAD_USER_INPUT when zod rejects the input shape", async () => {
+      await expect(
+        mutationResolvers.createShortUrl(
+          null,
+          { input: { originalUrl: "   " } },
+          makeCtx({ id: "user-1", email: "a@b.com" }),
+        ),
+      ).rejects.toMatchObject({ extensions: { code: "BAD_USER_INPUT" } });
+    });
+
+    it("maps an INVALID_URL result to a BAD_USER_INPUT error", async () => {
+      shortUrlServiceMocks.createShortUrl.mockResolvedValue({
+        ok: false,
+        reason: "INVALID_URL",
+      });
+
       await expect(
         mutationResolvers.createShortUrl(
           null,
           { input: { originalUrl: "not-a-url" } },
           makeCtx({ id: "user-1", email: "a@b.com" }),
         ),
-      ).rejects.toMatchObject({ extensions: { code: "BAD_USER_INPUT" } });
+      ).rejects.toMatchObject({
+        message: "Invalid URL",
+        extensions: { code: "BAD_USER_INPUT", reason: "INVALID_URL" },
+      });
     });
 
     it("maps a SLUG_TAKEN result to a BAD_USER_INPUT error", async () => {
