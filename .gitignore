@@ -50,3 +50,8 @@ Thumbs.db
 package-lock.json
 yarn.lock
 !pnpm-lock.yaml
+
+# ====================
+# Local notes (not part of the project)
+# ====================
+notes/
