@@ -114,6 +114,7 @@ export const redirectRateLimit = createFixedWindowRateLimit({
               `Please try again in ${retryAfterSeconds} second(s).`,
             actionHref: req.originalUrl,
             actionLabel: "Try again",
+            brandName: env.APP_NAME,
           }),
         );
       return;
