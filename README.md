@@ -39,7 +39,11 @@ apps/
   backend/    # API GraphQL + redirection /:code
 .github/
   workflows/  # CI frontend/backend
+CHANGELOG.md  # historique des versions (Keep a Changelog)
 ```
+
+Les versions des deux apps sont alignées sur celle du monorepo (`package.json` racine) :
+une seule version pour tout le projet, documentée dans `CHANGELOG.md`.
 
 ## Démarrage local
 

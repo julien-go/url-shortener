@@ -1,6 +1,7 @@
 {
   "name": "url-shortener",
   "private": true,
+  "version": "1.0.0",
   "description": "Fliro — Fullstack URL shortener (React 19, GraphQL, Express 5, PostgreSQL).",
   "repository": {
     "type": "git",
